@@ -152,6 +152,7 @@ const CharacterForm = ({ character, onSaved }) => {
     if (!formData.name) newErrors.name = 'El nombre es requerido';
     if (!formData.char_class) newErrors.char_class = 'La clase es requerida';
     if (!formData.race) newErrors.race = 'La raza es requerida';
+    if (!formData.alignment) newErrors.alignment = 'El alineamiento es requerido';
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -203,7 +204,11 @@ const CharacterForm = ({ character, onSaved }) => {
           />
         </div>
 
-        <SelectField label="Alineamiento" name="alignment" value={formData.alignment} options={ALINEAMIENTOS} onChange={handleChange} />
+        <SelectField 
+          label="Alineamiento" name="alignment" required
+          value={formData.alignment} options={ALINEAMIENTOS} onChange={handleChange} 
+          error={errors.alignment}
+        />
 
         {/* Level & XP */}
         <div className="grid grid-cols-2 gap-3">
