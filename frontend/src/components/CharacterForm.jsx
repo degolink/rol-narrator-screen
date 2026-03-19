@@ -35,28 +35,35 @@ const mod = (score) => {
 // ─── Reusable field components ─────────────────────────────────────────────
 const FIELD_CLS = 'w-full px-2 py-1.5 bg-gray-900 border border-gray-600 rounded text-gray-100 text-sm focus:outline-none focus:border-purple-500';
 
-const Field = ({ label, name, value, type = 'text', onChange }) => (
+const Field = ({ label, name, value, type = 'text', onChange, required, error }) => (
   <div>
-    <label className="block text-xs text-gray-400 mb-0.5">{label}</label>
+    <label className="block text-xs text-gray-400 mb-0.5">
+      {label} {required && <span className="text-red-500 font-bold">*</span>}
+    </label>
     {type === 'textarea' ? (
       <textarea name={name} value={value ?? ''} onChange={onChange} rows={2}
-        className={FIELD_CLS + ' resize-y'} />
+        className={`${FIELD_CLS} resize-y ${error ? 'border-red-500' : ''}`} />
     ) : (
       <input type={type} name={name} value={value ?? ''} onChange={onChange}
-        className={FIELD_CLS} />
+        className={`${FIELD_CLS} ${error ? 'border-red-500' : ''}`} />
     )}
+    {error && <p className="text-[10px] text-red-400 mt-0.5">{error}</p>}
   </div>
 );
 
-const SelectField = ({ label, name, value, options, onChange }) => (
+const SelectField = ({ label, name, value, options, onChange, required, error }) => (
   <div>
-    <label className="block text-xs text-gray-400 mb-0.5">{label}</label>
-    <select name={name} value={value ?? ''} onChange={onChange} className={FIELD_CLS}>
+    <label className="block text-xs text-gray-400 mb-0.5">
+      {label} {required && <span className="text-red-500 font-bold">*</span>}
+    </label>
+    <select name={name} value={value ?? ''} onChange={onChange} 
+      className={`${FIELD_CLS} ${error ? 'border-red-500' : ''}`}>
       <option value="">— Seleccionar —</option>
       {options.map(o => (
         <option key={o} value={o}>{o}</option>
       ))}
     </select>
+    {error && <p className="text-[10px] text-red-400 mt-0.5">{error}</p>}
   </div>
 );
 
@@ -94,9 +101,19 @@ const CharacterForm = ({ character, onSaved }) => {
   const isEdit = Boolean(character);
   const [formData, setFormData] = useState(character ? { ...character } : { ...EMPTY });
   const [levelUpMsg, setLevelUpMsg] = useState(null);
+  const [errors, setErrors] = useState({});
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+
+    // Clear error for the field being edited
+    if (errors[name]) {
+      setErrors(prev => {
+        const next = { ...prev };
+        delete next[name];
+        return next;
+      });
+    }
 
     // XP → auto level
     if (name === 'experience') {
@@ -129,14 +146,26 @@ const CharacterForm = ({ character, onSaved }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Validation
+    const newErrors = {};
+    if (!formData.name) newErrors.name = 'El nombre es requerido';
+    if (!formData.char_class) newErrors.char_class = 'La clase es requerida';
+    if (!formData.race) newErrors.race = 'La raza es requerida';
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
     try {
       const response = isEdit
         ? await api.patch(`characters/${character.id}/`, formData)
         : await api.post('characters/', formData);
       if (!isEdit) setFormData({ ...EMPTY });
+      setErrors({});
       onSaved(response.data);
     } catch (err) {
-      // TODO: improve error handling
       console.error('Error saving character', err);
     }
   };
@@ -153,13 +182,25 @@ const CharacterForm = ({ character, onSaved }) => {
 
         {/* Identity */}
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Nombre *" name="name" value={formData.name} onChange={handleChange} />
+          <Field 
+            label="Nombre" name="name" required 
+            value={formData.name} onChange={handleChange} 
+            error={errors.name} 
+          />
           <Field label="Apodo" name="nickname" value={formData.nickname} onChange={handleChange} />
         </div>
 
         <div className="grid grid-cols-2 gap-3">
-          <SelectField label="Clase *" name="char_class" value={formData.char_class} options={CLASES} onChange={handleChange} />
-          <SelectField label="Raza *" name="race" value={formData.race} options={RAZAS} onChange={handleChange} />
+          <SelectField 
+            label="Clase" name="char_class" required 
+            value={formData.char_class} options={CLASES} onChange={handleChange} 
+            error={errors.char_class} 
+          />
+          <SelectField 
+            label="Raza" name="race" required 
+            value={formData.race} options={RAZAS} onChange={handleChange} 
+            error={errors.race} 
+          />
         </div>
 
         <SelectField label="Alineamiento" name="alignment" value={formData.alignment} options={ALINEAMIENTOS} onChange={handleChange} />
