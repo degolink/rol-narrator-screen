@@ -234,7 +234,7 @@ const CharacterForm = ({ character, onSaved, onCancel }) => {
         {/* Level Progression */}
         <div>
           <SectionTitle icon={Sparkles}>Progresión</SectionTitle>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 sm:grid-cols-3 lg:grid-cols-6 gap-4">
             <div className="space-y-1.5">
               <Label className="text-[10px] text-gray-500 uppercase font-black">Nivel Actual</Label>
               <Select
@@ -263,7 +263,7 @@ const CharacterForm = ({ character, onSaved, onCancel }) => {
         {/* Attributes Section */}
         <div>
           <SectionTitle icon={Shield}>Atributos</SectionTitle>
-          <div className="grid grid-cols-6 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             {[
               ['strength', 'Fuerza (FUE)'], ['dexterity', 'Destreza (DES)'], ['constitution', 'Constitución (CON)'],
               ['intelligence', 'Inteligencia (INT)'], ['wisdom', 'Sabiduría (SAB)'], ['charisma', 'Carisma (CAR)']
