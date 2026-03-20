@@ -3,13 +3,13 @@ import CoinUpdater from './CoinUpdater';
 import apiService from '../services/apiService';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogFooter, 
-  DialogHeader, 
-  DialogTitle 
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle
 } from "@/components/ui/dialog";
 import { Edit2, Trash2, Shield, Zap, Swords } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -22,10 +22,12 @@ const mod = (score) => {
 
 // ─── Attribute cell ─────────────────────────────────────────────
 const StatCell = ({ label, value }) => (
-  <div className="flex flex-col items-center bg-gray-900/80 rounded-lg py-2 px-1 border border-gray-700/50 transition-colors hover:border-purple-500/50">
-    <span className="text-gray-500 font-bold text-[10px] tracking-widest uppercase">{label}</span>
+  <div className="flex flex-col bg-gray-900/80 rounded-lg py-2 px-3 border border-gray-700/50 transition-colors hover:border-purple-500/50">
+    <div className="flex justify-between items-center w-full mb-1">
+      <span className="text-gray-500 font-bold text-[10px] tracking-widest uppercase">{label}</span>
+      <span className="text-purple-400 text-[10px] font-medium">{mod(value)}</span>
+    </div>
     <span className="text-gray-100 font-bold text-base leading-tight">{value}</span>
-    <span className="text-purple-400 text-[10px] font-medium">{mod(value)}</span>
   </div>
 );
 
@@ -90,24 +92,24 @@ const CharacterCard = ({ character, onEdit, onDelete }) => {
                 <span className="text-gray-400">{character.race}</span>
               </p>
               <div className="mt-2 flex items-center gap-2">
-                 <div className="h-1 flex-1 bg-gray-950 rounded-full overflow-hidden">
-                    <div className="h-full bg-purple-600" style={{ width: `${Math.min(100, (character.experience / 355000) * 100)}%` }}></div>
-                 </div>
-                 <span className="text-[10px] text-gray-600 font-mono">{character.experience ?? 0} XP</span>
+                <div className="h-1 flex-1 bg-gray-950 rounded-full overflow-hidden">
+                  <div className="h-full bg-purple-600" style={{ width: `${Math.min(100, (character.experience / 355000) * 100)}%` }}></div>
+                </div>
+                <span className="text-[10px] text-gray-600 font-mono">{character.experience ?? 0} XP</span>
               </div>
             </div>
             <div className="flex gap-1">
-              <Button 
-                variant="ghost" 
-                size="icon" 
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={() => onEdit(character)}
                 className="h-8 w-8 text-gray-400 hover:text-blue-400 hover:bg-blue-400/10"
               >
                 <Edit2 className="h-4 w-4" />
               </Button>
-              <Button 
-                variant="ghost" 
-                size="icon" 
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={() => setShowDeleteDialog(true)}
                 className="h-8 w-8 text-gray-400 hover:text-red-400 hover:bg-red-400/10"
               >

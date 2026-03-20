@@ -6,19 +6,6 @@
 
 @custom-variant dark (&:is(.dark *));
 
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-body {
-  margin: 0;
-  min-height: 100vh;
-  font-family: inherit;
-}
 
 @theme inline {
   --font-heading: var(--font-mono);
@@ -136,9 +123,11 @@ body {
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }
+
   html {
     @apply font-mono;
   }

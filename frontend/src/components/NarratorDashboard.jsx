@@ -80,11 +80,7 @@ const NarratorDashboard = () => {
 
       {/* Main Actions */}
       <div className="flex justify-center mb-10">
-        <Button
-          onClick={openCreate}
-          size="lg"
-          className="bg-purple-900 hover:bg-purple-700 text-white font-bold px-8 h-12 rounded-xl transition-all shadow-lg shadow-purple-900/40"
-        >
+        <Button onClick={openCreate} className="bg-purple-900 hover:bg-purple-700 text-white">
           <Plus className="mr-2 h-5 w-5" /> Nuevo Personaje
         </Button>
       </div>

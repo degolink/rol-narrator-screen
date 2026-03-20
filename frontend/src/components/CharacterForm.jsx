@@ -55,7 +55,7 @@ const EMPTY = {
   background_story: '', motivations: '',
 };
 
-const CharacterForm = ({ character, onSaved }) => {
+const CharacterForm = ({ character, onSaved, onCancel }) => {
   const isEdit = Boolean(character);
   const [formData, setFormData] = useState(character ? { ...character } : { ...EMPTY });
   const [levelUpMsg, setLevelUpMsg] = useState(null);
@@ -127,7 +127,7 @@ const CharacterForm = ({ character, onSaved }) => {
       const response = isEdit
         ? await apiService.patchWithNotify(`characters/${character.id}/`, formData, successMsg)
         : await apiService.postWithNotify('characters/', formData, successMsg);
-      
+
       if (!isEdit) setFormData({ ...EMPTY });
       setErrors({});
       onSaved(response.data);
@@ -155,7 +155,7 @@ const CharacterForm = ({ character, onSaved }) => {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6 pb-20">
-        
+
         {/* Identity Section */}
         <div>
           <SectionTitle icon={User}>Identidad</SectionTitle>
@@ -183,14 +183,14 @@ const CharacterForm = ({ character, onSaved }) => {
         </div>
 
         {/* Origins Section */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="space-y-1.5">
             <Label className="text-[10px] text-gray-500 uppercase font-black">Clase</Label>
-            <Select 
-              value={formData.char_class} 
+            <Select
+              value={formData.char_class}
               onValueChange={(val) => updateField('char_class', val)}
             >
-              <SelectTrigger className={`bg-gray-950 border-gray-800 ${errors.char_class ? 'border-red-500' : ''}`}>
+              <SelectTrigger className={`w-full bg-gray-950 border-gray-800 ${errors.char_class ? 'border-red-500' : ''}`}>
                 <SelectValue placeholder="Seleccionar clase" />
               </SelectTrigger>
               <SelectContent className="bg-gray-900 border-gray-800 text-gray-100">
@@ -201,11 +201,11 @@ const CharacterForm = ({ character, onSaved }) => {
           </div>
           <div className="space-y-1.5">
             <Label className="text-[10px] text-gray-500 uppercase font-black">Raza</Label>
-            <Select 
-              value={formData.race} 
+            <Select
+              value={formData.race}
               onValueChange={(val) => updateField('race', val)}
             >
-              <SelectTrigger className={`bg-gray-950 border-gray-800 ${errors.race ? 'border-red-500' : ''}`}>
+              <SelectTrigger className={`w-full bg-gray-950 border-gray-800 ${errors.race ? 'border-red-500' : ''}`}>
                 <SelectValue placeholder="Seleccionar raza" />
               </SelectTrigger>
               <SelectContent className="bg-gray-900 border-gray-800 text-gray-100">
@@ -214,22 +214,21 @@ const CharacterForm = ({ character, onSaved }) => {
             </Select>
             {errors.race && <p className="text-[10px] text-red-400">{errors.race}</p>}
           </div>
-        </div>
-
-        <div className="space-y-1.5">
-          <Label className="text-[10px] text-gray-500 uppercase font-black">Alineamiento Moral</Label>
-          <Select 
-            value={formData.alignment} 
-            onValueChange={(val) => updateField('alignment', val)}
-          >
-            <SelectTrigger className={`bg-gray-950 border-gray-800 ${errors.alignment ? 'border-red-500' : ''}`}>
-              <SelectValue placeholder="Seleccionar alineamiento" />
-            </SelectTrigger>
-            <SelectContent className="bg-gray-900 border-gray-800 text-gray-100">
-              {ALINEAMIENTOS.map(a => <SelectItem key={a} value={a}>{a}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          {errors.alignment && <p className="text-[10px] text-red-400">{errors.alignment}</p>}
+          <div className="space-y-1.5">
+            <Label className="text-[10px] text-gray-500 uppercase font-black">Alineamiento Moral</Label>
+            <Select
+              value={formData.alignment}
+              onValueChange={(val) => updateField('alignment', val)}
+            >
+              <SelectTrigger className={`w-full bg-gray-950 border-gray-800 ${errors.alignment ? 'border-red-500' : ''}`}>
+                <SelectValue placeholder="Seleccionar alineamiento" />
+              </SelectTrigger>
+              <SelectContent className="bg-gray-900 border-gray-800 text-gray-100">
+                {ALINEAMIENTOS.map(a => <SelectItem key={a} value={a}>{a}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            {errors.alignment && <p className="text-[10px] text-red-400">{errors.alignment}</p>}
+          </div>
         </div>
 
         {/* Level Progression */}
@@ -238,11 +237,11 @@ const CharacterForm = ({ character, onSaved }) => {
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label className="text-[10px] text-gray-500 uppercase font-black">Nivel Actual</Label>
-              <Select 
-                value={String(formData.level)} 
+              <Select
+                value={String(formData.level)}
                 onValueChange={(val) => updateField('level', val)}
               >
-                <SelectTrigger className="bg-gray-950 border-gray-800">
+                <SelectTrigger className="w-full bg-gray-950 border-gray-800">
                   <SelectValue placeholder="Nivel" />
                 </SelectTrigger>
                 <SelectContent className="bg-gray-900 border-gray-800 text-gray-100">
@@ -264,20 +263,23 @@ const CharacterForm = ({ character, onSaved }) => {
         {/* Attributes Section */}
         <div>
           <SectionTitle icon={Shield}>Atributos</SectionTitle>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-6 gap-4">
             {[
-              ['strength', 'FUE'], ['dexterity', 'DES'], ['constitution', 'CON'],
-              ['intelligence', 'INT'], ['wisdom', 'SAB'], ['charisma', 'CAR']
+              ['strength', 'Fuerza (FUE)'], ['dexterity', 'Destreza (DES)'], ['constitution', 'Constitución (CON)'],
+              ['intelligence', 'Inteligencia (INT)'], ['wisdom', 'Sabiduría (SAB)'], ['charisma', 'Carisma (CAR)']
             ].map(([key, lbl]) => (
-              <div key={key} className="space-y-1.5">
-                <Label htmlFor={key} className="text-[9px] text-gray-500 uppercase font-black flex justify-between">
-                  {lbl} <span className="text-purple-400 font-bold">{mod(formData[key])}</span>
-                </Label>
+              <div key={key} className="bg-gray-950 p-4 rounded-xl border border-gray-800 flex flex-col items-center gap-2 transition-all hover:border-purple-500/30">
+                <div className="flex justify-between items-center w-full px-1">
+                  <Label htmlFor={key} className="text-[10px] text-gray-500 uppercase font-black">
+                    {lbl}
+                  </Label>
+                  <span className="text-purple-400 font-bold text-xs">{mod(formData[key])}</span>
+                </div>
                 <Input
                   type="number" id={key} name={key}
                   value={formData[key]} onChange={handleChange}
                   min={1} max={30}
-                  className="bg-gray-950 border-gray-800 text-center text-sm font-bold"
+                  className="bg-gray-900 border-gray-800 text-center text-2xl font-bold w-full"
                 />
               </div>
             ))}
@@ -341,15 +343,25 @@ const CharacterForm = ({ character, onSaved }) => {
         </div>
 
         {/* Sticky footer for submit */}
-        <div className="sticky bottom-0 left-0 right-0 p-4 -mx-6 bg-gray-900/95 backdrop-blur-md border-t border-gray-800 z-10">
-          <Button 
-            type="submit" 
+        <div className="sticky bottom-0 left-0 right-0 p-4 -mx-6 bg-gray-900/95 backdrop-blur-md border-t border-gray-800 z-10 flex gap-4">
+          <Button
+            type="submit"
             disabled={loading}
-            className="w-full bg-purple-900 hover:bg-purple-700 text-white font-bold h-12 rounded-xl transition-all shadow-lg shadow-purple-900/40"
+            className="flex-1 bg-purple-900 hover:bg-purple-700 text-white"
           >
-            <Save className="mr-2 h-4 w-4" /> 
+            <Save className="mr-2 h-4 w-4" />
             {loading ? 'Procesando...' : (isEdit ? 'Guardar Cambios' : 'Crear Héroe')}
           </Button>
+          {onCancel && (
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={onCancel}
+              className="flex-1 bg-red-900/20 border-red-900/50 text-red-400 hover:bg-red-900/40 hover:text-red-300"
+            >
+              Cancelar
+            </Button>
+          )}
         </div>
 
       </form>

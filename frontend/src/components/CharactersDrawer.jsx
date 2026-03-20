@@ -10,18 +10,19 @@ import {
 const CharactersDrawer = ({ isOpen, onClose, mode, character, onSaved }) => {
   return (
     <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <SheetContent className="w-full sm:max-w-lg bg-gray-900 border-gray-800 text-gray-100 overflow-y-auto p-0 flex flex-col">
+      <SheetContent className="w-full bg-gray-900 border-gray-800 text-gray-100 overflow-y-auto p-0 flex flex-col">
         <SheetHeader className="p-6 pb-4 border-b border-gray-800 sticky top-0 bg-gray-900 z-10">
           <SheetTitle className="text-yellow-300 font-bold text-base uppercase tracking-tighter" style={{ fontFamily: "'Press Start 2P', cursive" }}>
             {mode === 'edit' ? 'Editar personaje' : 'Crear personaje'}
           </SheetTitle>
         </SheetHeader>
-        
+
         <div className="flex-1 p-6">
           <CharacterForm
             key={character?.id ?? 'new'}
             character={character}
             onSaved={onSaved}
+            onCancel={onClose}
           />
         </div>
       </SheetContent>
