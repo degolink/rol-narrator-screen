@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import api from '../api';
+import apiService from '../services/apiService';
 import CharacterCard from './CharacterCard';
-import CharacterForm from './CharacterForm';
+import CharactersDrawer from './CharactersDrawer';
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
 
 const NarratorDashboard = () => {
   const [characters, setCharacters] = useState([]);
@@ -12,10 +14,9 @@ const NarratorDashboard = () => {
 
   const fetchCharacters = async () => {
     try {
-      const response = await api.get('characters/');
+      const response = await apiService.get('characters/');
       setCharacters(response.data);
     } catch (err) {
-      // TODO: improve error handling
       console.error("Error fetching characters:", err);
     } finally {
       setLoading(false);
@@ -54,32 +55,49 @@ const NarratorDashboard = () => {
 
   if (loading) return (
     <div className="flex items-center justify-center min-h-screen">
-      <p className="text-yellow-300 text-sm animate-pulse">Cargando personajes...</p>
+      <p className="text-yellow-300 text-sm animate-pulse tracking-widest" style={{ fontFamily: "'Press Start 2P', cursive" }}>
+        Cargando personajes...
+      </p>
     </div>
   );
 
   const drawerOpen = drawerMode !== null;
 
   return (
-    <div className="px-4 py-6 sm:px-6 lg:px-8 w-full">
+    <div className="px-4 py-6 sm:px-6 lg:px-8 w-full max-w-7xl mx-auto">
       {/* Header */}
-      <header className="mb-6 text-center">
+      <header className="mb-10 text-center">
         <h1
           className="text-2xl md:text-4xl font-bold text-yellow-300 mt-6 mb-4"
-          style={{ fontFamily: "'Press Start 2P', cursive", textShadow: "0 0 8px #ffcc00" }}
+          style={{ fontFamily: "'Press Start 2P', cursive", textShadow: "0 0 12px rgba(255, 204, 0, 0.4)" }}
         >
           Pantalla del Narrador
         </h1>
+        <p className="text-gray-400 text-sm max-w-2xl mx-auto">
+          Gestiona tus héroes y villanos, sigue sus estadísticas y mantén el control de la narrativa en tus sesiones de D&D 5e.
+        </p>
       </header>
 
-      {/* Character Cards */}
-      <div className="max-w-7xl mx-auto">
+      {/* Main Actions */}
+      <div className="flex justify-center mb-10">
+        <Button
+          onClick={openCreate}
+          size="lg"
+          className="bg-purple-900 hover:bg-purple-700 text-white font-bold px-8 h-12 rounded-xl transition-all shadow-lg shadow-purple-900/40"
+        >
+          <Plus className="mr-2 h-5 w-5" /> Nuevo Personaje
+        </Button>
+      </div>
+
+      {/* Character Cards Grid */}
+      <div className="mt-6">
         {characters.length === 0 ? (
-          <div className="text-center py-20">
-            <p className="text-gray-400 mb-6">No hay personajes creados.</p>
+          <div className="text-center py-24 bg-gray-900/50 rounded-2xl border-2 border-dashed border-gray-700">
+            <p className="text-gray-400 mb-2">No hay personajes creados todavía.</p>
+            <p className="text-gray-500 text-xs text-balance">Comienza creando uno nuevo para tu campaña.</p>
           </div>
         ) : (
-          <div className="flex flex-col gap-4 md:grid md:grid-cols-2 lg:grid-cols-3">
+          <div className="flex flex-col gap-6 md:grid md:grid-cols-2 lg:grid-cols-3">
             {characters.map(char => (
               <CharacterCard
                 key={char.id}
@@ -92,49 +110,14 @@ const NarratorDashboard = () => {
         )}
       </div>
 
-      {/* Add button */}
-      <div className="flex justify-center mt-8 mb-4">
-        <button
-          onClick={openCreate}
-          className="bg-purple-900 hover:bg-purple-700 active:scale-95 text-white font-bold py-3 px-8 rounded-lg transition-all shadow-lg shadow-purple-900/40 text-sm"
-        >
-          ＋ Nuevo Personaje
-        </button>
-      </div>
-
       {/* Shared drawer — create or edit */}
-      {drawerOpen && (
-        <div className="fixed inset-0 z-50 flex">
-          {/* Backdrop */}
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={closeDrawer} />
-
-          {/* Panel */}
-          <div className="relative ml-auto w-full max-w-md sm:max-w-lg h-full bg-gray-900 border-l border-gray-700 shadow-2xl overflow-y-auto flex flex-col animate-slide-in">
-            {/* Drawer header */}
-            <div className="sticky top-0 z-10 flex items-center justify-between p-4 bg-gray-900 border-b border-gray-700">
-              <h2 className="text-yellow-300 font-bold text-base" style={{ fontFamily: "'Press Start 2P', cursive" }}>
-                {drawerMode === 'edit' ? 'Editar personaje' : 'Crear personaje'}
-              </h2>
-              <button
-                onClick={closeDrawer}
-                className="text-gray-400 hover:text-white transition-colors text-xl leading-none w-8 h-8 flex items-center justify-center rounded hover:bg-gray-700"
-                aria-label="Cerrar"
-              >
-                ✕
-              </button>
-            </div>
-
-            {/* Form */}
-            <div className="flex-1 p-4">
-              <CharacterForm
-                key={editingCharacter?.id ?? 'new'}
-                character={editingCharacter}
-                onSaved={handleSaved}
-              />
-            </div>
-          </div>
-        </div>
-      )}
+      <CharactersDrawer
+        isOpen={drawerOpen}
+        onClose={closeDrawer}
+        mode={drawerMode}
+        character={editingCharacter}
+        onSaved={handleSaved}
+      />
     </div>
   );
 };

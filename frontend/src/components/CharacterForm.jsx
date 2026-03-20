@@ -1,6 +1,19 @@
 import React, { useState } from 'react';
-import api from '../api';
+import apiService from '../services/apiService';
 import { levelFromXp, minXpForLevel } from '../utils/levels';
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Sparkles, Save, User, Shield, Zap, BookOpen } from "lucide-react";
 
 // ─── D&D 5e valid values ───────────────────────────────────────────────────
 const CLASES = [
@@ -32,58 +45,6 @@ const mod = (score) => {
   return m >= 0 ? `+${m}` : `${m}`;
 };
 
-// ─── Reusable field components ─────────────────────────────────────────────
-const FIELD_CLS = 'w-full px-2 py-1.5 bg-gray-900 border border-gray-600 rounded text-gray-100 text-sm focus:outline-none focus:border-purple-500';
-
-const Field = ({ label, name, value, type = 'text', onChange, required, error }) => (
-  <div>
-    <label className="block text-xs text-gray-400 mb-0.5">
-      {label} {required && <span className="text-red-500 font-bold">*</span>}
-    </label>
-    {type === 'textarea' ? (
-      <textarea name={name} value={value ?? ''} onChange={onChange} rows={2}
-        className={`${FIELD_CLS} resize-y ${error ? 'border-red-500' : ''}`} />
-    ) : (
-      <input type={type} name={name} value={value ?? ''} onChange={onChange}
-        className={`${FIELD_CLS} ${error ? 'border-red-500' : ''}`} />
-    )}
-    {error && <p className="text-[10px] text-red-400 mt-0.5">{error}</p>}
-  </div>
-);
-
-const SelectField = ({ label, name, value, options, onChange, required, error }) => (
-  <div>
-    <label className="block text-xs text-gray-400 mb-0.5">
-      {label} {required && <span className="text-red-500 font-bold">*</span>}
-    </label>
-    <select name={name} value={value ?? ''} onChange={onChange} 
-      className={`${FIELD_CLS} ${error ? 'border-red-500' : ''}`}>
-      <option value="">— Seleccionar —</option>
-      {options.map(o => (
-        <option key={o} value={o}>{o}</option>
-      ))}
-    </select>
-    {error && <p className="text-[10px] text-red-400 mt-0.5">{error}</p>}
-  </div>
-);
-
-// Stat input that shows the modifier live
-const StatField = ({ label, name, value, onChange }) => {
-  const score = parseInt(value, 10) || 10;
-  return (
-    <div>
-      <label className="block text-xs text-gray-400 mb-0.5">
-        {label} <span className="text-purple-400">{mod(score)}</span>
-      </label>
-      <input
-        type="number" name={name} value={value ?? 10} onChange={onChange}
-        className={FIELD_CLS + ' text-center'}
-        min={1} max={30}
-      />
-    </div>
-  );
-};
-
 // ─── Default form state ────────────────────────────────────────────────────
 const EMPTY = {
   name: '', nickname: '', char_class: '', race: '', alignment: '',
@@ -94,18 +55,19 @@ const EMPTY = {
   background_story: '', motivations: '',
 };
 
-// Props:
-//   character  — if provided → edit mode (PATCH); omit → create mode (POST)
-//   onSaved(char) — called with saved character on success
 const CharacterForm = ({ character, onSaved }) => {
   const isEdit = Boolean(character);
   const [formData, setFormData] = useState(character ? { ...character } : { ...EMPTY });
   const [levelUpMsg, setLevelUpMsg] = useState(null);
   const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    updateField(name, value);
+  };
 
+  const updateField = (name, value) => {
     // Clear error for the field being edited
     if (errors[name]) {
       setErrors(prev => {
@@ -159,99 +121,237 @@ const CharacterForm = ({ character, onSaved }) => {
       return;
     }
 
+    setLoading(true);
     try {
+      const successMsg = isEdit ? 'Personaje actualizado correctamente' : '¡Héroe creado con éxito!';
       const response = isEdit
-        ? await api.patch(`characters/${character.id}/`, formData)
-        : await api.post('characters/', formData);
+        ? await apiService.patchWithNotify(`characters/${character.id}/`, formData, successMsg)
+        : await apiService.postWithNotify('characters/', formData, successMsg);
+      
       if (!isEdit) setFormData({ ...EMPTY });
       setErrors({});
       onSaved(response.data);
     } catch (err) {
       console.error('Error saving character', err);
+    } finally {
+      setLoading(false);
     }
   };
+
+  const SectionTitle = ({ children, icon: Icon }) => (
+    <div className="flex items-center gap-2 mb-4 mt-6 first:mt-0">
+      {Icon && <Icon className="h-4 w-4 text-purple-400" />}
+      <h3 className="text-xs font-black uppercase tracking-widest text-purple-300/80">{children}</h3>
+      <div className="h-px flex-1 bg-gradient-to-r from-gray-800 to-transparent"></div>
+    </div>
+  );
 
   return (
     <>
       {levelUpMsg && (
-        <div className="mb-4 bg-yellow-400 text-gray-900 font-bold px-4 py-2 rounded-lg text-sm text-center animate-bounce">
+        <div className="mb-6 bg-yellow-400 text-gray-900 font-bold px-4 py-2 rounded-lg text-xs text-center animate-bounce shadow-lg shadow-yellow-400/20">
           {levelUpMsg}
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-5">
-
-        {/* Identity */}
-        <div className="grid grid-cols-2 gap-3">
-          <Field 
-            label="Nombre" name="name" required 
-            value={formData.name} onChange={handleChange} 
-            error={errors.name} 
-          />
-          <Field label="Apodo" name="nickname" value={formData.nickname} onChange={handleChange} />
-        </div>
-
-        <div className="grid grid-cols-2 gap-3">
-          <SelectField 
-            label="Clase" name="char_class" required 
-            value={formData.char_class} options={CLASES} onChange={handleChange} 
-            error={errors.char_class} 
-          />
-          <SelectField 
-            label="Raza" name="race" required 
-            value={formData.race} options={RAZAS} onChange={handleChange} 
-            error={errors.race} 
-          />
-        </div>
-
-        <SelectField 
-          label="Alineamiento" name="alignment" required
-          value={formData.alignment} options={ALINEAMIENTOS} onChange={handleChange} 
-          error={errors.alignment}
-        />
-
-        {/* Level & XP */}
-        <div className="grid grid-cols-2 gap-3">
-          <SelectField
-            label="Nivel"
-            name="level"
-            value={String(formData.level)}
-            options={NIVELES.map(String)}
-            onChange={handleChange}
-          />
-          <Field label="Experiencia (XP)" name="experience" type="number" value={formData.experience} onChange={handleChange} />
-        </div>
-
-        {/* Attributes */}
+      <form onSubmit={handleSubmit} className="space-y-6 pb-20">
+        
+        {/* Identity Section */}
         <div>
-          <p className="text-xs text-yellow-300 font-bold uppercase tracking-wide mb-2">
-            Atributos <span className="text-gray-500 normal-case font-normal">(el modificador se muestra en tiempo real)</span>
-          </p>
-          <div className="grid grid-cols-3 gap-2">
-            {[['strength', 'FUE'], ['dexterity', 'DES'], ['constitution', 'CON'],
-            ['intelligence', 'INT'], ['wisdom', 'SAB'], ['charisma', 'CAR']].map(([key, lbl]) => (
-              <StatField key={key} label={lbl} name={key} value={formData[key]} onChange={handleChange} />
+          <SectionTitle icon={User}>Identidad</SectionTitle>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="name" className="text-[10px] text-gray-500 uppercase font-black">Nombre del Personaje</Label>
+              <Input
+                id="name" name="name"
+                value={formData.name} onChange={handleChange}
+                placeholder="Ej: Thrain Escudo"
+                className={`bg-gray-950 border-gray-800 focus:border-purple-500/50 ${errors.name ? 'border-red-500' : ''}`}
+              />
+              {errors.name && <p className="text-[10px] text-red-400">{errors.name}</p>}
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="nickname" className="text-[10px] text-gray-500 uppercase font-black">Mote o Título</Label>
+              <Input
+                id="nickname" name="nickname"
+                value={formData.nickname} onChange={handleChange}
+                placeholder="Ej: El Valeroso"
+                className="bg-gray-950 border-gray-800 focus:border-purple-500/50"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Origins Section */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <Label className="text-[10px] text-gray-500 uppercase font-black">Clase</Label>
+            <Select 
+              value={formData.char_class} 
+              onValueChange={(val) => updateField('char_class', val)}
+            >
+              <SelectTrigger className={`bg-gray-950 border-gray-800 ${errors.char_class ? 'border-red-500' : ''}`}>
+                <SelectValue placeholder="Seleccionar clase" />
+              </SelectTrigger>
+              <SelectContent className="bg-gray-900 border-gray-800 text-gray-100">
+                {CLASES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            {errors.char_class && <p className="text-[10px] text-red-400">{errors.char_class}</p>}
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-[10px] text-gray-500 uppercase font-black">Raza</Label>
+            <Select 
+              value={formData.race} 
+              onValueChange={(val) => updateField('race', val)}
+            >
+              <SelectTrigger className={`bg-gray-950 border-gray-800 ${errors.race ? 'border-red-500' : ''}`}>
+                <SelectValue placeholder="Seleccionar raza" />
+              </SelectTrigger>
+              <SelectContent className="bg-gray-900 border-gray-800 text-gray-100">
+                {RAZAS.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            {errors.race && <p className="text-[10px] text-red-400">{errors.race}</p>}
+          </div>
+        </div>
+
+        <div className="space-y-1.5">
+          <Label className="text-[10px] text-gray-500 uppercase font-black">Alineamiento Moral</Label>
+          <Select 
+            value={formData.alignment} 
+            onValueChange={(val) => updateField('alignment', val)}
+          >
+            <SelectTrigger className={`bg-gray-950 border-gray-800 ${errors.alignment ? 'border-red-500' : ''}`}>
+              <SelectValue placeholder="Seleccionar alineamiento" />
+            </SelectTrigger>
+            <SelectContent className="bg-gray-900 border-gray-800 text-gray-100">
+              {ALINEAMIENTOS.map(a => <SelectItem key={a} value={a}>{a}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          {errors.alignment && <p className="text-[10px] text-red-400">{errors.alignment}</p>}
+        </div>
+
+        {/* Level Progression */}
+        <div>
+          <SectionTitle icon={Sparkles}>Progresión</SectionTitle>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label className="text-[10px] text-gray-500 uppercase font-black">Nivel Actual</Label>
+              <Select 
+                value={String(formData.level)} 
+                onValueChange={(val) => updateField('level', val)}
+              >
+                <SelectTrigger className="bg-gray-950 border-gray-800">
+                  <SelectValue placeholder="Nivel" />
+                </SelectTrigger>
+                <SelectContent className="bg-gray-900 border-gray-800 text-gray-100">
+                  {NIVELES.map(n => <SelectItem key={n} value={String(n)}>Nivel {n}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="experience" className="text-[10px] text-gray-500 uppercase font-black">Experiencia (XP)</Label>
+              <Input
+                type="number" id="experience" name="experience"
+                value={formData.experience} onChange={handleChange}
+                className="bg-gray-950 border-gray-800 focus:border-purple-500/50"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Attributes Section */}
+        <div>
+          <SectionTitle icon={Shield}>Atributos</SectionTitle>
+          <div className="grid grid-cols-3 gap-3">
+            {[
+              ['strength', 'FUE'], ['dexterity', 'DES'], ['constitution', 'CON'],
+              ['intelligence', 'INT'], ['wisdom', 'SAB'], ['charisma', 'CAR']
+            ].map(([key, lbl]) => (
+              <div key={key} className="space-y-1.5">
+                <Label htmlFor={key} className="text-[9px] text-gray-500 uppercase font-black flex justify-between">
+                  {lbl} <span className="text-purple-400 font-bold">{mod(formData[key])}</span>
+                </Label>
+                <Input
+                  type="number" id={key} name={key}
+                  value={formData[key]} onChange={handleChange}
+                  min={1} max={30}
+                  className="bg-gray-950 border-gray-800 text-center text-sm font-bold"
+                />
+              </div>
             ))}
           </div>
         </div>
 
-        {/* Resources */}
+        {/* Vital Resources */}
         <div>
-          <p className="text-xs text-yellow-300 font-bold uppercase tracking-wide mb-2">Recursos</p>
-          <div className="grid grid-cols-3 gap-2">
-            <Field label="HP Actual" name="hp" type="number" value={formData.hp} onChange={handleChange} />
-            <Field label="HP Máx" name="max_hp" type="number" value={formData.max_hp} onChange={handleChange} />
-            <Field label="Energía" name="energy" type="number" value={formData.energy} onChange={handleChange} />
+          <SectionTitle icon={Zap}>Recursos Vitales</SectionTitle>
+          <div className="grid grid-cols-3 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="hp" className="text-[10px] text-gray-500 uppercase font-black">HP Actual</Label>
+              <Input
+                type="number" id="hp" name="hp"
+                value={formData.hp} onChange={handleChange}
+                className="bg-gray-950 border-gray-800 text-red-400 font-bold"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="max_hp" className="text-[10px] text-gray-500 uppercase font-black">HP Máximo</Label>
+              <Input
+                type="number" id="max_hp" name="max_hp"
+                value={formData.max_hp} onChange={handleChange}
+                className="bg-gray-950 border-gray-800 font-bold"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="energy" className="text-[10px] text-gray-500 uppercase font-black">Energía</Label>
+              <Input
+                type="number" id="energy" name="energy"
+                value={formData.energy} onChange={handleChange}
+                className="bg-gray-950 border-gray-800 text-blue-400 font-bold"
+              />
+            </div>
           </div>
         </div>
 
-        <Field label="Historia" name="background_story" type="textarea" value={formData.background_story} onChange={handleChange} />
-        <Field label="Motivaciones" name="motivations" type="textarea" value={formData.motivations} onChange={handleChange} />
+        {/* Narrative Section */}
+        <div>
+          <SectionTitle icon={BookOpen}>Trasfondo</SectionTitle>
+          <div className="space-y-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="background_story" className="text-[10px] text-gray-500 uppercase font-black">Historia</Label>
+              <Textarea
+                id="background_story" name="background_story"
+                value={formData.background_story} onChange={handleChange}
+                placeholder="Narra los orígenes de tu personaje..."
+                className="bg-gray-950 border-gray-800 min-h-[100px] text-sm"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="motivations" className="text-[10px] text-gray-500 uppercase font-black">Motivaciones y Objetivos</Label>
+              <Textarea
+                id="motivations" name="motivations"
+                value={formData.motivations} onChange={handleChange}
+                placeholder="¿Qué impulsa a tu héroe a la aventura?"
+                className="bg-gray-950 border-gray-800 text-sm"
+              />
+            </div>
+          </div>
+        </div>
 
-        <button type="submit"
-          className="w-full bg-purple-900 hover:bg-purple-700 text-white font-bold py-3 px-4 rounded-lg transition-colors text-sm">
-          {isEdit ? 'Guardar cambios' : 'Crear personaje'}
-        </button>
+        {/* Sticky footer for submit */}
+        <div className="sticky bottom-0 left-0 right-0 p-4 -mx-6 bg-gray-900/95 backdrop-blur-md border-t border-gray-800 z-10">
+          <Button 
+            type="submit" 
+            disabled={loading}
+            className="w-full bg-purple-900 hover:bg-purple-700 text-white font-bold h-12 rounded-xl transition-all shadow-lg shadow-purple-900/40"
+          >
+            <Save className="mr-2 h-4 w-4" /> 
+            {loading ? 'Procesando...' : (isEdit ? 'Guardar Cambios' : 'Crear Héroe')}
+          </Button>
+        </div>
+
       </form>
     </>
   );
