@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import apiService from '../services/apiService';
+import { apiService } from '../services/apiService';
 import { levelFromXp, minXpForLevel } from '../utils/levels';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -171,7 +171,7 @@ const CharacterForm = ({ character, onSaved, onCancel }) => {
               {errors.name && <p className="text-[10px] text-red-400">{errors.name}</p>}
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="nickname" className="text-[10px] text-gray-500 uppercase font-black">Mote o Título</Label>
+              <Label htmlFor="nickname" className="text-[10px] text-gray-500 uppercase font-black">Apodo o Título</Label>
               <Input
                 id="nickname" name="nickname"
                 value={formData.nickname} onChange={handleChange}
@@ -369,4 +369,4 @@ const CharacterForm = ({ character, onSaved, onCancel }) => {
   );
 };
 
-export default CharacterForm;
+export { CharacterForm };

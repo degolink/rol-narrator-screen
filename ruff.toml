@@ -1,0 +1,27 @@
+[lint]
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "C",  # flake8-comprehensions
+    "B",  # flake8-bugbear
+]
+ignore = [
+    "E501",  # line too long, handled by black/ruff format
+]
+
+[format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+
+[lint.per-file-ignores]
+"__init__.py" = ["F401"]
+
+[lint.isort]
+known-first-party = ["rol", "rol_narrator_screen"]
+
+[lint.mccabe]
+max-complexity = 10

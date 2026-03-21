@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import apiService from '../services/apiService';
+import { apiService } from '../services/apiService';
 import { Button } from "@/components/ui/button";
 import { Plus, Minus } from "lucide-react";
 
@@ -51,4 +51,4 @@ const CoinUpdater = ({ characterId, type, label, amount, onUpdate, colorClass })
   );
 };
 
-export default CoinUpdater;
+export { CoinUpdater };

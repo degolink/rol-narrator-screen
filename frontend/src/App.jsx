@@ -1,14 +1,28 @@
-import NarratorDashboard from './components/NarratorDashboard'
-import { Toaster } from "@/components/ui/sonner"
-import './index.css'
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { NarratorDashboard } from './components/NarratorDashboard';
+import { NavBar } from './components/NavBar';
+import { Home } from './pages/Home';
+import { Characters } from './pages/Characters';
+import { CharacterDetail } from './pages/CharacterDetail';
+import { Toaster } from "./components/ui/sonner";
 
-function App() {
+export function App() {
   return (
-    <div className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 min-h-screen text-gray-100 font-sans">
-      <NarratorDashboard />
-      <Toaster richColors position="top-right" />
-    </div>
-  )
-}
+    <Router>
+      <div className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 min-h-screen text-gray-100 font-sans flex flex-col">
+        <NavBar />
 
-export default App
+        <main className="flex-1">
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/narrador" element={<NarratorDashboard />} />
+            <Route path="/personajes" element={<Characters />} />
+            <Route path="/personaje/:id" element={<CharacterDetail />} />
+          </Routes>
+        </main>
+
+        <Toaster richColors position="top-right" />
+      </div>
+    </Router>
+  );
+}

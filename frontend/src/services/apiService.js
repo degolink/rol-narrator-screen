@@ -66,4 +66,4 @@ const apiService = {
   }
 };
 
-export default apiService;
+export { apiService };

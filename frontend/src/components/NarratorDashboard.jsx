@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import apiService from '../services/apiService';
-import CharacterCard from './CharacterCard';
-import CharactersDrawer from './CharactersDrawer';
+import { apiService } from '../services/apiService';
+import { CharacterCard } from './CharacterCard';
+import { CharactersDrawer } from './CharactersDrawer';
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 
@@ -118,4 +118,4 @@ const NarratorDashboard = () => {
   );
 };
 
-export default NarratorDashboard;
+export { NarratorDashboard };

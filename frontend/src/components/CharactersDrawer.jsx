@@ -1,5 +1,5 @@
 import React from 'react';
-import CharacterForm from './CharacterForm';
+import { CharacterForm } from './CharacterForm';
 import {
   Sheet,
   SheetContent,
@@ -30,4 +30,4 @@ const CharactersDrawer = ({ isOpen, onClose, mode, character, onSaved }) => {
   );
 };
 
-export default CharactersDrawer;
+export { CharactersDrawer };

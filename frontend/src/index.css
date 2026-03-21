@@ -1,8 +1,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 @import "tailwindcss";
-@plugin "tailwindcss-animate";
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/jetbrains-mono";
+
+@plugin "tailwindcss-animate";
 
 @custom-variant dark (&:is(.dark *));
 

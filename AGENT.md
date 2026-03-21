@@ -43,3 +43,7 @@ Avoid using relative paths for deep imports; use `@/components/ui/...` instead.
 We use **Sonner** for notifications via `shadcn/ui`. The native Toast component is deprecated and should not be used.
 Global Toaster is already configured in `src/App.jsx`.
 Use `apiService` from `src/services/apiService.js` for standardized requests with automatic notifications.
+
+## Frontend Code Style Rules
+- **No `export default`**: Use named exports exclusively (`export function Component() {}` or `export { Component }`) to ensure consistent naming and better refactoring support. Do not use `export default`.
+- **Spanish Localization**: All content displayed on the pages must be in Spanish.

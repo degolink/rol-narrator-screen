@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import CoinUpdater from './CoinUpdater';
-import apiService from '../services/apiService';
+import { CoinUpdater } from './CoinUpdater';
+import { apiService } from '../services/apiService';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -195,4 +195,4 @@ const CharacterCard = ({ character, onEdit, onDelete }) => {
   );
 };
 
-export default CharacterCard;
+export { CharacterCard };
