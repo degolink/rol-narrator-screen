@@ -12,8 +12,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Sparkles, Save, User, Shield, Zap, BookOpen } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Sparkles, Save, User, Shield, Zap, BookOpen, Eye, EyeOff } from "lucide-react";
 
 // ─── D&D 5e valid values ───────────────────────────────────────────────────
 const CLASES = [
@@ -47,15 +47,16 @@ const mod = (score) => {
 
 // ─── Default form state ────────────────────────────────────────────────────
 const EMPTY = {
-  name: '', nickname: '', char_class: '', race: '', alignment: '',
+  name: '', nickname: '', char_class: '', secondary_class: '', race: '', alignment: '',
   level: 1, experience: 0,
   strength: 10, dexterity: 10, constitution: 10,
   intelligence: 10, wisdom: 10, charisma: 10,
   hp: 10, max_hp: 10, energy: 0,
   background_story: '', motivations: '',
+  npc: false, visible: false,
 };
 
-const CharacterForm = ({ character, onSaved, onCancel }) => {
+const CharacterForm = ({ character, onSaved, onCancel, isMaster = true }) => {
   const isEdit = Boolean(character);
   const [formData, setFormData] = useState(character ? { ...character } : { ...EMPTY });
   const [levelUpMsg, setLevelUpMsg] = useState(null);
@@ -112,9 +113,11 @@ const CharacterForm = ({ character, onSaved, onCancel }) => {
     // Validation
     const newErrors = {};
     if (!formData.name) newErrors.name = 'El nombre es requerido';
-    if (!formData.char_class) newErrors.char_class = 'La clase es requerida';
-    if (!formData.race) newErrors.race = 'La raza es requerida';
-    if (!formData.alignment) newErrors.alignment = 'El alineamiento es requerido';
+    if (!formData.npc) {
+      if (!formData.char_class) newErrors.char_class = 'La clase es requerida';
+      if (!formData.race) newErrors.race = 'La raza es requerida';
+      if (!formData.alignment) newErrors.alignment = 'El alineamiento es requerido';
+    }
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -158,7 +161,26 @@ const CharacterForm = ({ character, onSaved, onCancel }) => {
 
         {/* Identity Section */}
         <div>
-          <SectionTitle icon={User}>Identidad</SectionTitle>
+          <div className="flex justify-between items-center w-full">
+            <SectionTitle icon={User}>Identidad</SectionTitle>
+            {isMaster && (
+              <div className="flex items-center gap-4 mb-4 mt-6">
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="npc" className="text-[10px] text-gray-400 uppercase font-black cursor-pointer">NPC</Label>
+                  <Switch
+                    id="npc"
+                    checked={formData.npc}
+                    onCheckedChange={(checked) => updateField('npc', checked)}
+                    className="data-[state=checked]:bg-purple-600"
+                  />
+                </div>
+                <div className="flex items-center gap-2 cursor-pointer" onClick={() => updateField('visible', !formData.visible)}>
+                  {formData.visible ? <Eye className="w-5 h-5 text-green-400" /> : <EyeOff className="w-5 h-5 text-gray-600" />}
+                  <span className="text-[10px] text-gray-400 uppercase font-black">{formData.visible ? 'Público' : 'Oculto'}</span>
+                </div>
+              </div>
+            )}
+          </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label htmlFor="name" className="text-[10px] text-gray-500 uppercase font-black">Nombre del Personaje</Label>
@@ -183,15 +205,15 @@ const CharacterForm = ({ character, onSaved, onCancel }) => {
         </div>
 
         {/* Origins Section */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="space-y-1.5">
-            <Label className="text-[10px] text-gray-500 uppercase font-black">Clase</Label>
+            <Label className="text-[10px] text-gray-500 uppercase font-black">Clase Principal {(!formData.npc) && '*'}</Label>
             <Select
-              value={formData.char_class}
+              value={formData.char_class || ''}
               onValueChange={(val) => updateField('char_class', val)}
             >
               <SelectTrigger className={`w-full bg-gray-950 border-gray-800 ${errors.char_class ? 'border-red-500' : ''}`}>
-                <SelectValue placeholder="Seleccionar clase" />
+                <SelectValue placeholder="Seleccionar" />
               </SelectTrigger>
               <SelectContent className="bg-gray-900 border-gray-800 text-gray-100">
                 {CLASES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
@@ -200,13 +222,28 @@ const CharacterForm = ({ character, onSaved, onCancel }) => {
             {errors.char_class && <p className="text-[10px] text-red-400">{errors.char_class}</p>}
           </div>
           <div className="space-y-1.5">
-            <Label className="text-[10px] text-gray-500 uppercase font-black">Raza</Label>
+            <Label className="text-[10px] text-gray-500 uppercase font-black">Clase Secundaria</Label>
             <Select
-              value={formData.race}
+              value={formData.secondary_class || 'none'}
+              onValueChange={(val) => updateField('secondary_class', val === 'none' ? '' : val)}
+            >
+              <SelectTrigger className="w-full bg-gray-950 border-gray-800">
+                <SelectValue placeholder="Opcional" />
+              </SelectTrigger>
+              <SelectContent className="bg-gray-900 border-gray-800 text-gray-100">
+                <SelectItem value="none">Ninguna</SelectItem>
+                {CLASES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-[10px] text-gray-500 uppercase font-black">Raza {(!formData.npc) && '*'}</Label>
+            <Select
+              value={formData.race || ''}
               onValueChange={(val) => updateField('race', val)}
             >
               <SelectTrigger className={`w-full bg-gray-950 border-gray-800 ${errors.race ? 'border-red-500' : ''}`}>
-                <SelectValue placeholder="Seleccionar raza" />
+                <SelectValue placeholder="Seleccionar" />
               </SelectTrigger>
               <SelectContent className="bg-gray-900 border-gray-800 text-gray-100">
                 {RAZAS.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}
@@ -215,13 +252,13 @@ const CharacterForm = ({ character, onSaved, onCancel }) => {
             {errors.race && <p className="text-[10px] text-red-400">{errors.race}</p>}
           </div>
           <div className="space-y-1.5">
-            <Label className="text-[10px] text-gray-500 uppercase font-black">Alineamiento Moral</Label>
+            <Label className="text-[10px] text-gray-500 uppercase font-black">Alineamiento Moral {(!formData.npc) && '*'}</Label>
             <Select
-              value={formData.alignment}
+              value={formData.alignment || ''}
               onValueChange={(val) => updateField('alignment', val)}
             >
               <SelectTrigger className={`w-full bg-gray-950 border-gray-800 ${errors.alignment ? 'border-red-500' : ''}`}>
-                <SelectValue placeholder="Seleccionar alineamiento" />
+                <SelectValue placeholder="Seleccionar" />
               </SelectTrigger>
               <SelectContent className="bg-gray-900 border-gray-800 text-gray-100">
                 {ALINEAMIENTOS.map(a => <SelectItem key={a} value={a}>{a}</SelectItem>)}

@@ -5,9 +5,13 @@ class Character(models.Model):
     # Basic data
     name = models.CharField(max_length=255)
     nickname = models.CharField(max_length=255, blank=True, null=True)
-    char_class = models.CharField(max_length=100)
-    race = models.CharField(max_length=100)
-    alignment = models.CharField(max_length=100)
+    char_class = models.CharField(max_length=100, blank=True, null=True)
+    secondary_class = models.CharField(max_length=100, blank=True, null=True)
+    race = models.CharField(max_length=100, blank=True, null=True)
+    alignment = models.CharField(max_length=100, blank=True, null=True)
+    
+    visible = models.BooleanField(default=False)
+    npc = models.BooleanField(default=False)
 
     level = models.IntegerField(default=1)
     experience = models.IntegerField(default=0)

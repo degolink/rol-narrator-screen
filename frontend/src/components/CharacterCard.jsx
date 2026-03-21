@@ -1,8 +1,14 @@
 import React, { useState } from 'react';
+import { toast } from 'sonner';
 import { CoinUpdater } from './CoinUpdater';
 import { apiService } from '../services/apiService';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   Dialog,
   DialogContent,
@@ -11,7 +17,7 @@ import {
   DialogHeader,
   DialogTitle
 } from "@/components/ui/dialog";
-import { Edit2, Trash2, Shield, Zap, Swords } from "lucide-react";
+import { Edit2, Trash2, Shield, Zap, Swords, Eye, EyeOff, Share2, ExternalLink } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 // D&D 5e modifier = floor((score - 10) / 2)
@@ -32,7 +38,7 @@ const StatCell = ({ label, value }) => (
 );
 
 // ─── Main component ──────────────────────────────────────────────────────────
-const CharacterCard = ({ character, onEdit, onDelete }) => {
+const CharacterCard = ({ character, onEdit, onDelete, onToggleVisibility }) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const handleDeleteConfirm = async () => {
@@ -75,8 +81,11 @@ const CharacterCard = ({ character, onEdit, onDelete }) => {
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
-                <CardTitle className="text-lg font-bold text-yellow-300 truncate">
-                  {character.name}
+                <CardTitle className="text-lg font-bold text-yellow-300 truncate flex items-baseline gap-2">
+                  <span>{character.name}</span>
+                  {character.nickname && (
+                    <span className="text-sm text-gray-400 italic font-normal">"{character.nickname}"</span>
+                  )}
                 </CardTitle>
                 {character.alignment && (
                   <Badge variant="outline" className="text-[10px] py-0 px-1.5 border-gray-600 text-gray-500 font-normal uppercase tracking-tighter">
@@ -86,10 +95,18 @@ const CharacterCard = ({ character, onEdit, onDelete }) => {
               </div>
               <p className="text-sm text-gray-400 mt-1 flex items-center gap-1.5 flex-wrap">
                 <span className="font-bold text-gray-300">Niv.{character.level}</span>
-                <span className="text-gray-600">·</span>
-                <span className="text-purple-300 font-medium">{character.char_class}</span>
-                <span className="text-gray-600">·</span>
-                <span className="text-gray-400">{character.race}</span>
+                {character.char_class && (
+                  <>
+                    <span className="text-gray-600">·</span>
+                    <span className="text-purple-300 font-medium">{character.char_class}{character.secondary_class ? ` / ${character.secondary_class}` : ''}</span>
+                  </>
+                )}
+                {character.race && (
+                  <>
+                    <span className="text-gray-600">·</span>
+                    <span className="text-gray-400">{character.race}</span>
+                  </>
+                )}
               </p>
               <div className="mt-2 flex items-center gap-2">
                 <div className="h-1 flex-1 bg-gray-950 rounded-full overflow-hidden">
@@ -99,22 +116,92 @@ const CharacterCard = ({ character, onEdit, onDelete }) => {
               </div>
             </div>
             <div className="flex gap-1">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => onEdit(character)}
-                className="h-8 w-8 text-gray-400 hover:text-blue-400 hover:bg-blue-400/10"
-              >
-                <Edit2 className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setShowDeleteDialog(true)}
-                className="h-8 w-8 text-gray-400 hover:text-red-400 hover:bg-red-400/10"
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
+              {onToggleVisibility && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => onToggleVisibility(character.id, character.visible)}
+                      className={`h-8 w-8 ${character.visible ? 'text-green-400 hover:text-green-300 hover:bg-green-400/10' : 'text-gray-600 hover:text-gray-400 hover:bg-gray-400/10'}`}
+                    >
+                      {character.visible ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent className="bg-gray-800 text-gray-100 border-gray-700">
+                    <p>{character.visible ? "Ocultar Personaje" : "Hacer Público"}</p>
+                  </TooltipContent>
+                </Tooltip>
+              )}
+              {!character.npc && (
+                <>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => {
+                          navigator.clipboard.writeText(`${window.location.origin}/personaje/${character.id}`);
+                          toast.success("Enlace copiado al portapapeles");
+                        }}
+                        className="h-8 w-8 text-gray-400 hover:text-blue-400 hover:bg-blue-400/10"
+                      >
+                        <Share2 className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent className="bg-gray-800 text-gray-100 border-gray-700">
+                      <p>Copiar enlace al portapapeles</p>
+                    </TooltipContent>
+                  </Tooltip>
+
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <a
+                        href={`/personaje/${character.id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 h-8 w-8 text-gray-400 hover:text-blue-400 hover:bg-blue-400/10"
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                      </a>
+                    </TooltipTrigger>
+                    <TooltipContent className="bg-gray-800 text-gray-100 border-gray-700">
+                      <p>Abrir página en nueva pestaña</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </>
+              )}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => onEdit(character)}
+                    className="h-8 w-8 text-gray-400 hover:text-blue-400 hover:bg-blue-400/10"
+                  >
+                    <Edit2 className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent className="bg-gray-800 text-gray-100 border-gray-700">
+                  <p>Editar Personaje</p>
+                </TooltipContent>
+              </Tooltip>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setShowDeleteDialog(true)}
+                    className="h-8 w-8 text-gray-400 hover:text-red-400 hover:bg-red-400/10"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent className="bg-gray-800 text-gray-100 border-gray-700">
+                  <p>Eliminar Personaje</p>
+                </TooltipContent>
+              </Tooltip>
             </div>
           </div>
         </CardHeader>

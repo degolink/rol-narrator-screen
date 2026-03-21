@@ -93,15 +93,52 @@ const NarratorDashboard = () => {
             <p className="text-gray-500 text-xs text-balance">Comienza creando uno nuevo para tu campaña.</p>
           </div>
         ) : (
-          <div className="flex flex-col gap-6 md:grid md:grid-cols-2 lg:grid-cols-3">
-            {characters.map(char => (
-              <CharacterCard
-                key={char.id}
-                character={char}
-                onEdit={openEdit}
-                onDelete={handleDeleted}
-              />
-            ))}
+          <div className="space-y-12">
+            {/* Main Characters Section */}
+            <div>
+              <h2 className="text-xl font-bold text-gray-200 mb-6 border-b border-gray-800 pb-2">Personajes Principales</h2>
+              {characters.filter(c => !c.npc).length === 0 ? (
+                <p className="text-gray-500 text-sm italic">No hay personajes principales registrados.</p>
+              ) : (
+                <div className="flex flex-col gap-6 md:grid md:grid-cols-2 lg:grid-cols-3">
+                  {characters.filter(c => !c.npc).map(char => (
+                    <CharacterCard
+                      key={char.id}
+                      character={char}
+                      onEdit={openEdit}
+                      onDelete={handleDeleted}
+                      onToggleVisibility={async (id, currentVis) => {
+                        const updated = await apiService.patch(`characters/${id}/`, { visible: !currentVis });
+                        setCharacters(prev => prev.map(c => c.id === updated.data.id ? updated.data : c));
+                      }}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+            
+            {/* NPCs Section */}
+            <div>
+              <h2 className="text-xl font-bold text-gray-200 mb-6 border-b border-gray-800 pb-2">Personajes No Jugadores (NPCs)</h2>
+              {characters.filter(c => c.npc).length === 0 ? (
+                <p className="text-gray-500 text-sm italic">No hay NPCs registrados.</p>
+              ) : (
+                <div className="flex flex-col gap-6 md:grid md:grid-cols-2 lg:grid-cols-3 opacity-90">
+                  {characters.filter(c => c.npc).map(char => (
+                    <CharacterCard
+                      key={char.id}
+                      character={char}
+                      onEdit={openEdit}
+                      onDelete={handleDeleted}
+                      onToggleVisibility={async (id, currentVis) => {
+                        const updated = await apiService.patch(`characters/${id}/`, { visible: !currentVis });
+                        setCharacters(prev => prev.map(c => c.id === updated.data.id ? updated.data : c));
+                      }}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>
