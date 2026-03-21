@@ -128,7 +128,7 @@ const CharacterCard = ({ character, onEdit, onDelete, onToggleVisibility }) => {
                       {character.visible ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent className="bg-gray-800 text-gray-100 border-gray-700">
+                  <TooltipContent>
                     <p>{character.visible ? "Ocultar Personaje" : "Hacer Público"}</p>
                   </TooltipContent>
                 </Tooltip>
@@ -149,7 +149,7 @@ const CharacterCard = ({ character, onEdit, onDelete, onToggleVisibility }) => {
                         <Share2 className="h-4 w-4" />
                       </Button>
                     </TooltipTrigger>
-                    <TooltipContent className="bg-gray-800 text-gray-100 border-gray-700">
+                    <TooltipContent>
                       <p>Copiar enlace al portapapeles</p>
                     </TooltipContent>
                   </Tooltip>
@@ -165,7 +165,7 @@ const CharacterCard = ({ character, onEdit, onDelete, onToggleVisibility }) => {
                         <ExternalLink className="h-4 w-4" />
                       </a>
                     </TooltipTrigger>
-                    <TooltipContent className="bg-gray-800 text-gray-100 border-gray-700">
+                    <TooltipContent>
                       <p>Abrir página en nueva pestaña</p>
                     </TooltipContent>
                   </Tooltip>
@@ -182,7 +182,7 @@ const CharacterCard = ({ character, onEdit, onDelete, onToggleVisibility }) => {
                     <Edit2 className="h-4 w-4" />
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent className="bg-gray-800 text-gray-100 border-gray-700">
+                <TooltipContent>
                   <p>Editar Personaje</p>
                 </TooltipContent>
               </Tooltip>
@@ -198,7 +198,7 @@ const CharacterCard = ({ character, onEdit, onDelete, onToggleVisibility }) => {
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent className="bg-gray-800 text-gray-100 border-gray-700">
+                <TooltipContent>
                   <p>Eliminar Personaje</p>
                 </TooltipContent>
               </Tooltip>
