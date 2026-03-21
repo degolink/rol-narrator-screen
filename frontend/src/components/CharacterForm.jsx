@@ -300,14 +300,14 @@ const CharacterForm = ({ character, onSaved, onCancel, isMaster = true }) => {
         {/* Attributes Section */}
         <div>
           <SectionTitle icon={Shield}>Atributos</SectionTitle>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
             {[
               ['strength', 'Fuerza (FUE)'], ['dexterity', 'Destreza (DES)'], ['constitution', 'Constitución (CON)'],
               ['intelligence', 'Inteligencia (INT)'], ['wisdom', 'Sabiduría (SAB)'], ['charisma', 'Carisma (CAR)']
             ].map(([key, lbl]) => (
-              <div key={key} className="bg-gray-950 p-4 rounded-xl border border-gray-800 flex flex-col items-center gap-2 transition-all hover:border-purple-500/30">
-                <div className="flex justify-between items-center w-full px-1">
-                  <Label htmlFor={key} className="text-[10px] text-gray-500 uppercase font-black">
+              <div key={key} className="bg-gray-950 p-3 sm:p-4 rounded-xl border border-gray-800 flex flex-col items-center gap-2 transition-all hover:border-purple-500/30">
+                <div className="flex justify-between items-center w-full px-1 gap-1">
+                  <Label htmlFor={key} className="text-[9px] sm:text-[10px] text-gray-500 uppercase font-black truncate">
                     {lbl}
                   </Label>
                   <span className="text-purple-400 font-bold text-xs">{mod(formData[key])}</span>

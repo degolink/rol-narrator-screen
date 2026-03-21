@@ -100,7 +100,7 @@ const NarratorDashboard = () => {
               {characters.filter(c => !c.npc).length === 0 ? (
                 <p className="text-gray-500 text-sm italic">No hay personajes principales registrados.</p>
               ) : (
-                <div className="flex flex-col gap-6 md:grid md:grid-cols-2 lg:grid-cols-3">
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
                   {characters.filter(c => !c.npc).map(char => (
                     <CharacterCard
                       key={char.id}
@@ -123,7 +123,7 @@ const NarratorDashboard = () => {
               {characters.filter(c => c.npc).length === 0 ? (
                 <p className="text-gray-500 text-sm italic">No hay NPCs registrados.</p>
               ) : (
-                <div className="flex flex-col gap-6 md:grid md:grid-cols-2 lg:grid-cols-3 opacity-90">
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3 opacity-90">
                   {characters.filter(c => c.npc).map(char => (
                     <CharacterCard
                       key={char.id}

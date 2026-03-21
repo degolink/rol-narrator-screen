@@ -78,9 +78,9 @@ const CharacterCard = ({ character, onEdit, onDelete, onToggleVisibility }) => {
       <Card className="bg-gray-800/50 border-gray-700 hover:border-purple-500/50 transition-all duration-300 group overflow-hidden shadow-xl shadow-black/20">
         {/* ── Header ── */}
         <CardHeader className="p-5 pb-4 border-b border-gray-700/50 bg-gray-800/30">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
+          <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
+            <div className="flex-1 min-w-0 w-full">
+              <div className="flex flex-wrap items-center gap-2">
                 <CardTitle className="text-lg font-bold text-yellow-300 truncate flex items-baseline gap-2">
                   <span>{character.name}</span>
                   {character.nickname && (
@@ -115,7 +115,7 @@ const CharacterCard = ({ character, onEdit, onDelete, onToggleVisibility }) => {
                 <span className="text-[10px] text-gray-600 font-mono">{character.experience ?? 0} XP</span>
               </div>
             </div>
-            <div className="flex gap-1">
+            <div className="flex flex-wrap gap-1 mt-2 sm:mt-0">
               {onToggleVisibility && (
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -239,7 +239,7 @@ const CharacterCard = ({ character, onEdit, onDelete, onToggleVisibility }) => {
               <Swords className="h-4 w-4 text-yellow-300 opacity-50" />
               <p className="text-xs text-yellow-300/80 font-black uppercase tracking-widest">Atributos</p>
             </div>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               <StatCell label="FUE" value={character.strength} />
               <StatCell label="DES" value={character.dexterity} />
               <StatCell label="CON" value={character.constitution} />

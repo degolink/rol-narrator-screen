@@ -86,7 +86,7 @@ export function Characters() {
           {mainCharacters.length === 0 ? (
             <p className="text-gray-500 text-sm italic text-center py-8">No hay héroes públicos actualmente.</p>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
               {mainCharacters.map(renderCard)}
             </div>
           )}
@@ -96,7 +96,7 @@ export function Characters() {
         {npcs.length > 0 && (
           <div>
             <h2 className="text-xl font-bold text-gray-200 mb-6 border-b border-gray-800 pb-2">Habitantes y Entidades (NPCs)</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
               {npcs.map(renderCard)}
             </div>
           </div>
