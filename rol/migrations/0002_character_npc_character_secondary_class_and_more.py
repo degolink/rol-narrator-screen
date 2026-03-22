@@ -4,40 +4,39 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('rol', '0001_initial'),
+        ("rol", "0001_initial"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='character',
-            name='npc',
+            model_name="character",
+            name="npc",
             field=models.BooleanField(default=False),
         ),
         migrations.AddField(
-            model_name='character',
-            name='secondary_class',
+            model_name="character",
+            name="secondary_class",
             field=models.CharField(blank=True, max_length=100, null=True),
         ),
         migrations.AddField(
-            model_name='character',
-            name='visible',
+            model_name="character",
+            name="visible",
             field=models.BooleanField(default=False),
         ),
         migrations.AlterField(
-            model_name='character',
-            name='alignment',
+            model_name="character",
+            name="alignment",
             field=models.CharField(blank=True, max_length=100, null=True),
         ),
         migrations.AlterField(
-            model_name='character',
-            name='char_class',
+            model_name="character",
+            name="char_class",
             field=models.CharField(blank=True, max_length=100, null=True),
         ),
         migrations.AlterField(
-            model_name='character',
-            name='race',
+            model_name="character",
+            name="race",
             field=models.CharField(blank=True, max_length=100, null=True),
         ),
     ]

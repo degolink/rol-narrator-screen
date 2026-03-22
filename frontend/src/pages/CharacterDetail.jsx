@@ -14,7 +14,7 @@ export function CharacterDetail() {
         const response = await apiService.get(`characters/${id}/`);
         setCharacter(response.data);
       } catch (err) {
-        console.error("Error fetching character:", err);
+        console.error('Error fetching character:', err);
       } finally {
         setLoading(false);
       }
@@ -22,19 +22,24 @@ export function CharacterDetail() {
     fetchCharacter();
   }, [id]);
 
-  if (loading) return (
-    <div className="flex items-center justify-center min-h-[50vh]">
-      <p className="text-yellow-300 text-sm animate-pulse tracking-widest" style={{ fontFamily: "'Press Start 2P', cursive" }}>
-        Cargando detalles...
-      </p>
-    </div>
-  );
+  if (loading)
+    return (
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <p
+          className="text-yellow-300 text-sm animate-pulse tracking-widest"
+          style={{ fontFamily: "'Press Start 2P', cursive" }}
+        >
+          Cargando detalles...
+        </p>
+      </div>
+    );
 
-  if (!character) return (
-    <div className="text-center py-24 text-red-400">
-      Error: Personaje no encontrado
-    </div>
-  );
+  if (!character)
+    return (
+      <div className="text-center py-24 text-red-400">
+        Error: Personaje no encontrado
+      </div>
+    );
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

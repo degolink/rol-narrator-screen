@@ -1,5 +1,5 @@
 from django.db import models
-from django.utils import timezone
+
 
 class Character(models.Model):
     # Basic data
@@ -9,7 +9,7 @@ class Character(models.Model):
     secondary_class = models.CharField(max_length=100, blank=True, null=True)
     race = models.CharField(max_length=100, blank=True, null=True)
     alignment = models.CharField(max_length=100, blank=True, null=True)
-    
+
     visible = models.BooleanField(default=False)
     npc = models.BooleanField(default=False)
 
@@ -47,8 +47,11 @@ class Character(models.Model):
     def __str__(self):
         return f"{self.name} ({self.char_class})"
 
+
 class Spell(models.Model):
-    character = models.ForeignKey(Character, on_delete=models.CASCADE, related_name='spells')
+    character = models.ForeignKey(
+        Character, on_delete=models.CASCADE, related_name="spells"
+    )
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
     level = models.IntegerField(default=0)
@@ -57,8 +60,11 @@ class Spell(models.Model):
     def __str__(self):
         return self.name
 
+
 class Item(models.Model):
-    character = models.ForeignKey(Character, on_delete=models.CASCADE, related_name='items')
+    character = models.ForeignKey(
+        Character, on_delete=models.CASCADE, related_name="items"
+    )
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
     quantity = models.IntegerField(default=1)
@@ -67,8 +73,11 @@ class Item(models.Model):
     def __str__(self):
         return self.name
 
+
 class Condition(models.Model):
-    character = models.ForeignKey(Character, on_delete=models.CASCADE, related_name='conditions')
+    character = models.ForeignKey(
+        Character, on_delete=models.CASCADE, related_name="conditions"
+    )
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -76,8 +85,11 @@ class Condition(models.Model):
     def __str__(self):
         return self.name
 
+
 class InventoryItem(models.Model):
-    character = models.ForeignKey(Character, on_delete=models.CASCADE, related_name='inventory')
+    character = models.ForeignKey(
+        Character, on_delete=models.CASCADE, related_name="inventory"
+    )
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
     weight = models.FloatField(default=0.0)

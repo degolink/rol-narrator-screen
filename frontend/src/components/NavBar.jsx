@@ -1,13 +1,17 @@
-import { Link, useLocation } from 'react-router-dom';
-import { Home, BookOpen, Users } from 'lucide-react';
+import { NavLink, Link, useMatch } from 'react-router-dom';
+import { BookOpen, Users } from 'lucide-react';
 
 export function NavBar() {
-  const location = useLocation();
+  const isCharacterDetail = useMatch('/personaje/*');
 
   const navItems = [
-    { path: '/', label: 'Inicio', icon: Home },
     { path: '/narrador', label: 'Pantalla del Narrador', icon: BookOpen },
-    { path: '/personajes', label: 'Personajes', icon: Users },
+    {
+      path: '/personajes',
+      label: 'Personajes',
+      icon: Users,
+      extraActiveState: !!isCharacterDetail,
+    },
   ];
 
   return (
@@ -16,35 +20,39 @@ export function NavBar() {
         <div className="flex justify-between h-16">
           <div className="flex">
             <div className="flex-shrink-0 flex items-center">
-              <span className="text-xl font-bold text-gray-100 flex items-center gap-2">
+              <Link
+                to="/"
+                className="text-xl font-bold text-gray-100 flex items-center gap-2 hover:text-indigo-300 transition-colors"
+              >
                 <BookOpen className="w-6 h-6 text-indigo-400" />
                 Pantalla del Narrador
-              </span>
+              </Link>
             </div>
             <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
               {navItems.map((item) => {
                 const Icon = item.icon;
-                const isActive = location.pathname === item.path ||
-                  (item.path === '/personajes' && location.pathname.startsWith('/personaje/'));
 
                 return (
-                  <Link
+                  <NavLink
                     key={item.path}
                     to={item.path}
-                    className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${isActive
-                        ? 'border-indigo-500 text-white'
-                        : 'border-transparent text-gray-300 hover:border-gray-300 hover:text-white'
-                      }`}
+                    className={({ isActive }) => {
+                      const active = isActive || item.extraActiveState;
+
+                      return `inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors ${
+                        active
+                          ? 'border-indigo-500 text-white'
+                          : 'border-transparent text-gray-300 hover:border-gray-300 hover:text-white'
+                      }`;
+                    }}
                   >
                     <Icon className="w-4 h-4 mr-2" />
                     {item.label}
-                  </Link>
+                  </NavLink>
                 );
               })}
             </div>
           </div>
-
-          {/* Mobile menu button could go here */}
         </div>
       </div>
     </nav>

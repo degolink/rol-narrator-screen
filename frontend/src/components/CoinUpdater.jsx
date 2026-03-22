@@ -1,19 +1,29 @@
 import React, { useState } from 'react';
 import { apiService } from '../services/apiService';
-import { Button } from "@/components/ui/button";
-import { Plus, Minus } from "lucide-react";
+import { Button } from '@/components/ui/button';
+import { Plus, Minus } from 'lucide-react';
 
-const CoinUpdater = ({ characterId, type, label, amount, onUpdate, colorClass }) => {
+const CoinUpdater = ({
+  characterId,
+  type,
+  label,
+  amount,
+  onUpdate,
+  colorClass,
+}) => {
   const [loading, setLoading] = useState(false);
 
   const handleUpdate = async (delta) => {
     const newValue = Math.max(0, amount + delta);
     setLoading(true);
     try {
-      const response = await apiService.post(`characters/${characterId}/coin/`, {
-        type: type,
-        value: newValue
-      });
+      const response = await apiService.post(
+        `characters/${characterId}/coin/`,
+        {
+          type: type,
+          value: newValue,
+        },
+      );
       onUpdate(response.data);
     } catch (err) {
       console.error('Error updating coin', err);
@@ -24,7 +34,11 @@ const CoinUpdater = ({ characterId, type, label, amount, onUpdate, colorClass })
 
   return (
     <div className="flex items-center justify-between bg-gray-900/60 p-1.5 px-2 rounded-lg border border-gray-800">
-      <span className={`text-[10px] font-black uppercase tracking-tighter w-12 ${colorClass}`}>{label}</span>
+      <span
+        className={`text-[10px] font-black uppercase tracking-tighter w-12 ${colorClass}`}
+      >
+        {label}
+      </span>
 
       <div className="flex items-center gap-1.5">
         <Button
@@ -36,7 +50,9 @@ const CoinUpdater = ({ characterId, type, label, amount, onUpdate, colorClass })
         >
           <Minus className="h-3 w-3" />
         </Button>
-        <span className="min-w-[20px] text-center font-mono text-xs font-bold text-gray-200 leading-none">{amount}</span>
+        <span className="min-w-[20px] text-center font-mono text-xs font-bold text-gray-200 leading-none">
+          {amount}
+        </span>
         <Button
           variant="secondary"
           size="icon"

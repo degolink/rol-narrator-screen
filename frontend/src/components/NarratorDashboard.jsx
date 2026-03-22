@@ -2,8 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { apiService } from '../services/apiService';
 import { CharacterCard } from './CharacterCard';
 import { CharactersDrawer } from './CharactersDrawer';
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Button } from '@/components/ui/button';
+import { Plus } from 'lucide-react';
 
 const NarratorDashboard = () => {
   const [characters, setCharacters] = useState([]);
@@ -17,13 +17,15 @@ const NarratorDashboard = () => {
       const response = await apiService.get('characters/');
       setCharacters(response.data);
     } catch (err) {
-      console.error("Error fetching characters:", err);
+      console.error('Error fetching characters:', err);
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => { fetchCharacters(); }, []);
+  useEffect(() => {
+    fetchCharacters();
+  }, []);
 
   const openCreate = () => {
     setEditingCharacter(null);
@@ -42,24 +44,30 @@ const NarratorDashboard = () => {
 
   const handleSaved = (savedChar) => {
     if (drawerMode === 'create') {
-      setCharacters(prev => [savedChar, ...prev]);
+      setCharacters((prev) => [savedChar, ...prev]);
     } else {
-      setCharacters(prev => prev.map(c => c.id === savedChar.id ? savedChar : c));
+      setCharacters((prev) =>
+        prev.map((c) => (c.id === savedChar.id ? savedChar : c)),
+      );
     }
     closeDrawer();
   };
 
   const handleDeleted = (id) => {
-    setCharacters(prev => prev.filter(c => c.id !== id));
+    setCharacters((prev) => prev.filter((c) => c.id !== id));
   };
 
-  if (loading) return (
-    <div className="flex items-center justify-center min-h-screen">
-      <p className="text-yellow-300 text-sm animate-pulse tracking-widest" style={{ fontFamily: "'Press Start 2P', cursive" }}>
-        Cargando personajes...
-      </p>
-    </div>
-  );
+  if (loading)
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <p
+          className="text-yellow-300 text-sm animate-pulse tracking-widest"
+          style={{ fontFamily: "'Press Start 2P', cursive" }}
+        >
+          Cargando personajes...
+        </p>
+      </div>
+    );
 
   const drawerOpen = drawerMode !== null;
 
@@ -69,18 +77,25 @@ const NarratorDashboard = () => {
       <header className="mb-10 text-center">
         <h1
           className="text-2xl md:text-4xl font-bold text-yellow-300 mt-6 mb-4"
-          style={{ fontFamily: "'Press Start 2P', cursive", textShadow: "0 0 12px rgba(255, 204, 0, 0.4)" }}
+          style={{
+            fontFamily: "'Press Start 2P', cursive",
+            textShadow: '0 0 12px rgba(255, 204, 0, 0.4)',
+          }}
         >
           Pantalla del Narrador
         </h1>
         <p className="text-gray-400 text-sm max-w-2xl mx-auto">
-          Gestiona tus héroes y villanos, sigue sus estadísticas y mantén el control de la narrativa en tus sesiones de D&D 5e.
+          Gestiona tus héroes y villanos, sigue sus estadísticas y mantén el
+          control de la narrativa en tus sesiones de D&D 5e.
         </p>
       </header>
 
       {/* Main Actions */}
       <div className="flex justify-center mb-10">
-        <Button onClick={openCreate} className="bg-purple-900 hover:bg-purple-700 text-white">
+        <Button
+          onClick={openCreate}
+          className="bg-purple-900 hover:bg-purple-700 text-white"
+        >
           <Plus className="mr-2 h-5 w-5" /> Nuevo Personaje
         </Button>
       </div>
@@ -89,53 +104,83 @@ const NarratorDashboard = () => {
       <div className="mt-6">
         {characters.length === 0 ? (
           <div className="text-center py-24 bg-gray-900/50 rounded-2xl border-2 border-dashed border-gray-700">
-            <p className="text-gray-400 mb-2">No hay personajes creados todavía.</p>
-            <p className="text-gray-500 text-xs text-balance">Comienza creando uno nuevo para tu campaña.</p>
+            <p className="text-gray-400 mb-2">
+              No hay personajes creados todavía.
+            </p>
+            <p className="text-gray-500 text-xs text-balance">
+              Comienza creando uno nuevo para tu campaña.
+            </p>
           </div>
         ) : (
           <div className="space-y-12">
             {/* Main Characters Section */}
             <div>
-              <h2 className="text-xl font-bold text-gray-200 mb-6 border-b border-gray-800 pb-2">Personajes Principales</h2>
-              {characters.filter(c => !c.npc).length === 0 ? (
-                <p className="text-gray-500 text-sm italic">No hay personajes principales registrados.</p>
+              <h2 className="text-xl font-bold text-gray-200 mb-6 border-b border-gray-800 pb-2">
+                Personajes Principales
+              </h2>
+              {characters.filter((c) => !c.npc).length === 0 ? (
+                <p className="text-gray-500 text-sm italic">
+                  No hay personajes principales registrados.
+                </p>
               ) : (
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
-                  {characters.filter(c => !c.npc).map(char => (
-                    <CharacterCard
-                      key={char.id}
-                      character={char}
-                      onEdit={openEdit}
-                      onDelete={handleDeleted}
-                      onToggleVisibility={async (id, currentVis) => {
-                        const updated = await apiService.patch(`characters/${id}/`, { visible: !currentVis });
-                        setCharacters(prev => prev.map(c => c.id === updated.data.id ? updated.data : c));
-                      }}
-                    />
-                  ))}
+                  {characters
+                    .filter((c) => !c.npc)
+                    .map((char) => (
+                      <CharacterCard
+                        key={char.id}
+                        character={char}
+                        onEdit={openEdit}
+                        onDelete={handleDeleted}
+                        onToggleVisibility={async (id, currentVis) => {
+                          const updated = await apiService.patch(
+                            `characters/${id}/`,
+                            { visible: !currentVis },
+                          );
+                          setCharacters((prev) =>
+                            prev.map((c) =>
+                              c.id === updated.data.id ? updated.data : c,
+                            ),
+                          );
+                        }}
+                      />
+                    ))}
                 </div>
               )}
             </div>
-            
+
             {/* NPCs Section */}
             <div>
-              <h2 className="text-xl font-bold text-gray-200 mb-6 border-b border-gray-800 pb-2">Personajes No Jugadores (NPCs)</h2>
-              {characters.filter(c => c.npc).length === 0 ? (
-                <p className="text-gray-500 text-sm italic">No hay NPCs registrados.</p>
+              <h2 className="text-xl font-bold text-gray-200 mb-6 border-b border-gray-800 pb-2">
+                Personajes No Jugadores (NPCs)
+              </h2>
+              {characters.filter((c) => c.npc).length === 0 ? (
+                <p className="text-gray-500 text-sm italic">
+                  No hay NPCs registrados.
+                </p>
               ) : (
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3 opacity-90">
-                  {characters.filter(c => c.npc).map(char => (
-                    <CharacterCard
-                      key={char.id}
-                      character={char}
-                      onEdit={openEdit}
-                      onDelete={handleDeleted}
-                      onToggleVisibility={async (id, currentVis) => {
-                        const updated = await apiService.patch(`characters/${id}/`, { visible: !currentVis });
-                        setCharacters(prev => prev.map(c => c.id === updated.data.id ? updated.data : c));
-                      }}
-                    />
-                  ))}
+                  {characters
+                    .filter((c) => c.npc)
+                    .map((char) => (
+                      <CharacterCard
+                        key={char.id}
+                        character={char}
+                        onEdit={openEdit}
+                        onDelete={handleDeleted}
+                        onToggleVisibility={async (id, currentVis) => {
+                          const updated = await apiService.patch(
+                            `characters/${id}/`,
+                            { visible: !currentVis },
+                          );
+                          setCharacters((prev) =>
+                            prev.map((c) =>
+                              c.id === updated.data.id ? updated.data : c,
+                            ),
+                          );
+                        }}
+                      />
+                    ))}
                 </div>
               )}
             </div>

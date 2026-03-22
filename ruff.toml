@@ -9,6 +9,7 @@ select = [
 ]
 ignore = [
     "E501",  # line too long, handled by black/ruff format
+    "F401",  # unused-import, disable auto-fix deletion
 ]
 
 [format]

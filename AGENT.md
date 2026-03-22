@@ -47,3 +47,23 @@ Use `apiService` from `src/services/apiService.js` for standardized requests wit
 ## Frontend Code Style Rules
 - **No `export default`**: Use named exports exclusively (`export function Component() {}` or `export { Component }`) to ensure consistent naming and better refactoring support. Do not use `export default`.
 - **Spanish Localization**: All content displayed on the pages must be in Spanish.
+
+## Python Code Style and Formatting
+This project uses **Ruff** for linting and formatting the backend code. All Python code must adhere to the rules defined in `ruff.toml`.
+
+### Linting and Formatting Commands
+To ensure your code follows the style guidelines, run these commands inside the backend container:
+
+- **Check for linting issues**:
+  ```bash
+  docker compose exec backend ruff check .
+  ```
+- **Automatically fix linting issues**:
+  ```bash
+  docker compose exec backend ruff check --fix .
+  ```
+- **Format the code**:
+  ```bash
+  docker compose exec backend ruff format .
+  ```
+

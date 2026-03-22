@@ -20,9 +20,12 @@ export function Home() {
         >
           <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
           <BookOpen className="w-12 h-12 text-indigo-400 mb-6 group-hover:scale-110 transition-transform duration-300" />
-          <h2 className="text-2xl font-bold text-gray-100 mb-3">Pantalla del Narrador</h2>
+          <h2 className="text-2xl font-bold text-gray-100 mb-3">
+            Pantalla del Narrador
+          </h2>
           <p className="text-gray-400">
-            Accede a la pantalla principal del narrador para gestionar el flujo del juego, ver a los jugadores y controlar la historia.
+            Accede a la pantalla principal del narrador para gestionar el flujo
+            del juego, ver a los jugadores y controlar la historia.
           </p>
         </Link>
 
@@ -34,7 +37,8 @@ export function Home() {
           <Users className="w-12 h-12 text-purple-400 mb-6 group-hover:scale-110 transition-transform duration-300" />
           <h2 className="text-2xl font-bold text-gray-100 mb-3">Personajes</h2>
           <p className="text-gray-400">
-            Crea, visualiza y gestiona los personajes de los jugadores. Lleva un registro de las estadísticas, el inventario y la progresión.
+            Crea, visualiza y gestiona los personajes de los jugadores. Lleva un
+            registro de las estadísticas, el inventario y la progresión.
           </p>
         </Link>
       </div>
