@@ -1,35 +1,18 @@
-import React, { useState } from 'react';
-import { apiService } from '../services/apiService';
+import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus, Minus } from 'lucide-react';
 
-const CoinUpdater = ({
-  characterId,
+export function CoinUpdater({
   type,
   label,
   amount,
   onUpdate,
   colorClass,
-}) => {
-  const [loading, setLoading] = useState(false);
-
-  const handleUpdate = async (delta) => {
+  loading = false,
+}) {
+  const handleUpdate = (delta) => {
     const newValue = Math.max(0, amount + delta);
-    setLoading(true);
-    try {
-      const response = await apiService.post(
-        `characters/${characterId}/coin/`,
-        {
-          type: type,
-          value: newValue,
-        },
-      );
-      onUpdate(response.data);
-    } catch (err) {
-      console.error('Error updating coin', err);
-    } finally {
-      setLoading(false);
-    }
+    onUpdate(newValue);
   };
 
   return (
@@ -67,4 +50,3 @@ const CoinUpdater = ({
   );
 };
 
-export { CoinUpdater };

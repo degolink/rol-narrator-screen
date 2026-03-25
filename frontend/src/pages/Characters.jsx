@@ -2,17 +2,22 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiService } from '../services/apiService';
 import { Card, CardContent } from '@/components/ui/card';
+import { useCharactersListSync } from '../hooks/characters/useCharactersListSync';
 
 export function Characters() {
-  const [characters, setCharacters] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+
+  // Unified character list sync
+  const { characters, setCharacters } = useCharactersListSync([], {
+    onlyVisible: true,
+  });
 
   useEffect(() => {
     const fetchCharacters = async () => {
       try {
         const response = await apiService.get('characters/');
-        // Only public characters
+        // Sync the hook's internal state with the fetched data
         setCharacters(response.data.filter((c) => c.visible));
       } catch (err) {
         console.error('Error fetching characters:', err);
@@ -21,7 +26,7 @@ export function Characters() {
       }
     };
     fetchCharacters();
-  }, []);
+  }, [setCharacters]);
 
   if (loading)
     return (
@@ -64,18 +69,27 @@ export function Characters() {
               {char.race}
             </p>
           )}
-          <div className="mt-3 flex items-center gap-2 max-w-[200px]">
-            <div className="h-1 flex-1 bg-gray-950 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-purple-600"
-                style={{
-                  width: `${Math.min(100, ((char.experience || 0) / 355000) * 100)}%`,
-                }}
-              ></div>
+          <div className="mt-3 flex items-center justify-between gap-2 max-w-[280px]">
+            <div className="flex items-center gap-2 flex-1">
+              <div className="h-1 flex-1 bg-gray-950 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-purple-600"
+                  style={{
+                    width: `${Math.min(100, ((char.experience || 0) / 355000) * 100)}%`,
+                  }}
+                ></div>
+              </div>
+              <span className="text-[10px] text-gray-500 font-mono">
+                {char.experience || 0} XP
+              </span>
             </div>
-            <span className="text-[10px] text-gray-500 font-mono">
-              {char.experience || 0} XP
-            </span>
+            
+            <div className="flex items-center gap-1.5 min-w-fit">
+              <span className="text-[10px] text-[#b87333] font-bold" title="Cobre">{char.copper || 0}C</span>
+              <span className="text-[10px] text-[#c0c0c0] font-bold" title="Plata">{char.silver || 0}P</span>
+              <span className="text-[10px] text-[#ffd700] font-bold" title="Oro">{char.gold || 0}O</span>
+              <span className="text-[10px] text-[#e5e4e2] font-bold" title="Platino">{char.platinum || 0}Pt</span>
+            </div>
           </div>
         </div>
         <div className="bg-gray-900 px-4 py-2 rounded-lg border border-gray-700/50 text-center min-w-[4rem] shrink-0">

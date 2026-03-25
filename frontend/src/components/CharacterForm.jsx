@@ -1,6 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { apiService } from '../services/apiService';
 import { levelFromXp, minXpForLevel } from '../utils/levels';
+import { validateCharacter } from '../utils/validation';
+import { dequal } from 'dequal';
+import { CoinUpdater } from './CoinUpdater';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -15,13 +18,14 @@ import {
 import { Switch } from '@/components/ui/switch';
 import {
   Sparkles,
-  Save,
   User,
   Shield,
   Zap,
   BookOpen,
   Eye,
   EyeOff,
+  Loader2,
+  CheckCircle2,
 } from 'lucide-react';
 
 // ─── D&D 5e valid values ───────────────────────────────────────────────────
@@ -109,14 +113,63 @@ const EMPTY = {
   visible: false,
 };
 
-const CharacterForm = ({ character, onSaved, onCancel, isMaster = true }) => {
+export function CharacterForm({ character, onSaved, onCancel, isMaster = true }) {
   const isEdit = Boolean(character);
   const [formData, setFormData] = useState(
     character ? { ...character } : { ...EMPTY },
   );
   const [levelUpMsg, setLevelUpMsg] = useState(null);
   const [errors, setErrors] = useState({});
-  const [loading, setLoading] = useState(false);
+  const [savingStatus, setSavingStatus] = useState('idle'); // 'idle', 'saving', 'saved'
+  const formDataRef = useRef(formData);
+  const characterRef = useRef(character);
+  const isEditRef = useRef(isEdit);
+  const lastSyncDataRef = useRef(null);
+
+  // Keep refs up-to-date for the unmount hook
+  useEffect(() => {
+    formDataRef.current = formData;
+  }, [formData]);
+
+  useEffect(() => {
+    characterRef.current = character;
+  }, [character]);
+
+  useEffect(() => {
+    isEditRef.current = isEdit;
+  }, [isEdit]);
+
+  // Flush pending saves on unmount
+  useEffect(() => {
+    return () => {
+      if (isEditRef.current && characterRef.current && formDataRef.current) {
+        // If formData changed from what we originally received (or last synced)
+        // and we haven't flushed it (drawer closed early), fire the patch request.
+        if (!dequal(formDataRef.current, characterRef.current)) {
+          const { success } = validateCharacter(formDataRef.current);
+          if (success) {
+            // Fire-and-forget patch
+            apiService
+              .patch(`characters/${characterRef.current.id}/`, formDataRef.current)
+              .catch((err) => console.error('Error auto-saving on unmount', err));
+          }
+        }
+      }
+    };
+  }, []);
+
+  // 1. Remote Sync: Update form if character changes from WebSocket (Narrator/other)
+  useEffect(() => {
+    if (character) {
+      // To prevent active edits from being overwritten by delayed or irrelevant syncs,
+      // we only update if the new character data is genuinely different from what we last
+      // synced to the server or received from the server.
+      if (!lastSyncDataRef.current || !dequal(character, lastSyncDataRef.current)) {
+        setFormData(character);
+        lastSyncDataRef.current = character;
+      }
+    }
+  }, [character]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -168,44 +221,83 @@ const CharacterForm = ({ character, onSaved, onCancel, isMaster = true }) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  // 2. Auto-save triggers
+  const saveChanges = useCallback(async () => {
+    if (!isEditRef.current) return;
+    const currentData = formDataRef.current;
+    const currentChar = characterRef.current;
 
     // Validation
-    const newErrors = {};
-    if (!formData.name) newErrors.name = 'El nombre es requerido';
-    if (!formData.npc) {
-      if (!formData.char_class) newErrors.char_class = 'La clase es requerida';
-      if (!formData.race) newErrors.race = 'La raza es requerida';
-      if (!formData.alignment)
-        newErrors.alignment = 'El alineamiento es requerido';
-    }
-
-    if (Object.keys(newErrors).length > 0) {
+    const { success, errors: newErrors } = validateCharacter(currentData);
+    if (!success) {
+      // For auto-save, we only set errors if they are "critical" or if certain fields are wrong
+      // But actually, showing them while they type might be noisy.
+      // However, we MUST prevent saving invalid data.
       setErrors(newErrors);
       return;
     }
 
-    setLoading(true);
+    setSavingStatus('saving');
     try {
-      const successMsg = isEdit
-        ? 'Personaje actualizado correctamente'
-        : '¡Héroe creado con éxito!';
-      const response = isEdit
-        ? await apiService.patchWithNotify(
-            `characters/${character.id}/`,
-            formData,
-            successMsg,
-          )
-        : await apiService.postWithNotify('characters/', formData, successMsg);
-
-      if (!isEdit) setFormData({ ...EMPTY });
-      setErrors({});
-      onSaved(response.data);
+      lastSyncDataRef.current = { ...currentData };
+      const response = await apiService.patchWithNotify(
+        `characters/${currentChar.id}/`,
+        currentData,
+        'Cambios guardados',
+        {},
+        {
+          duration: 1000,
+          position: 'top-right',
+          className: 'text-xs p-2 min-h-0',
+        }
+      );
+      setSavingStatus('saved');
+      setTimeout(() => setSavingStatus('idle'), 2000);
+      if (onSaved) onSaved(response.data);
     } catch (err) {
-      console.error('Error saving character', err);
-    } finally {
-      setLoading(false);
+      console.error('Error auto-saving character', err);
+      setSavingStatus('idle');
+    }
+  }, [onSaved]);
+
+  useEffect(() => {
+    if (!isEdit) return;
+
+    // Check if formData is different from character prop
+    const hasChanged = !dequal(formData, character);
+
+    if (hasChanged) {
+      const timer = setTimeout(() => {
+        saveChanges();
+      }, 1000); // 1s debounce
+      return () => clearTimeout(timer);
+    }
+  }, [formData, isEdit, character, saveChanges]);
+
+  // For initial creation, we still need a way to submit
+  const handleCreate = async (e) => {
+    if (e) e.preventDefault();
+    if (isEdit) return;
+
+    // Validation
+    const { success, errors: newErrors } = validateCharacter(formData);
+
+    if (!success) {
+      setErrors(newErrors);
+      return;
+    }
+
+    try {
+      const response = await apiService.postWithNotify(
+        'characters/',
+        formData,
+        '¡Héroe creado con éxito!',
+      );
+      // We do NOT clear the form here, the parent handles closing the drawer
+      setErrors({});
+      if (onSaved) onSaved(response.data);
+    } catch (err) {
+      console.error('Error creating character', err);
     }
   };
 
@@ -227,42 +319,44 @@ const CharacterForm = ({ character, onSaved, onCancel, isMaster = true }) => {
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-6 pb-20">
+      <form onSubmit={handleCreate} className="space-y-6 pb-20">
         {/* Identity Section */}
         <div>
           <div className="flex justify-between items-center w-full">
             <SectionTitle icon={User}>Identidad</SectionTitle>
-            {isMaster && (
-              <div className="flex items-center gap-4 mb-4 mt-6">
-                <div className="flex items-center gap-2">
-                  <Label
-                    htmlFor="npc"
-                    className="text-[10px] text-gray-400 uppercase font-black cursor-pointer"
+            <div className="flex flex-col items-end gap-1 relative">
+              {isMaster && (
+                <div className="flex items-center gap-4 mb-4 mt-6">
+                  <div className="flex items-center gap-2">
+                    <Label
+                      htmlFor="npc"
+                      className="text-[10px] text-gray-400 uppercase font-black cursor-pointer"
+                    >
+                      NPC
+                    </Label>
+                    <Switch
+                      id="npc"
+                      checked={formData.npc}
+                      onCheckedChange={(checked) => updateField('npc', checked)}
+                      className="data-[state=checked]:bg-purple-600"
+                    />
+                  </div>
+                  <div
+                    className="flex items-center gap-2 cursor-pointer"
+                    onClick={() => updateField('visible', !formData.visible)}
                   >
-                    NPC
-                  </Label>
-                  <Switch
-                    id="npc"
-                    checked={formData.npc}
-                    onCheckedChange={(checked) => updateField('npc', checked)}
-                    className="data-[state=checked]:bg-purple-600"
-                  />
+                    {formData.visible ? (
+                      <Eye className="w-5 h-5 text-green-400" />
+                    ) : (
+                      <EyeOff className="w-5 h-5 text-gray-600" />
+                    )}
+                    <span className="text-[10px] text-gray-400 uppercase font-black">
+                      {formData.visible ? 'Público' : 'Oculto'}
+                    </span>
+                  </div>
                 </div>
-                <div
-                  className="flex items-center gap-2 cursor-pointer"
-                  onClick={() => updateField('visible', !formData.visible)}
-                >
-                  {formData.visible ? (
-                    <Eye className="w-5 h-5 text-green-400" />
-                  ) : (
-                    <EyeOff className="w-5 h-5 text-gray-600" />
-                  )}
-                  <span className="text-[10px] text-gray-400 uppercase font-black">
-                    {formData.visible ? 'Público' : 'Oculto'}
-                  </span>
-                </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
@@ -442,8 +536,13 @@ const CharacterForm = ({ character, onSaved, onCancel, isMaster = true }) => {
                 name="experience"
                 value={formData.experience}
                 onChange={handleChange}
-                className="bg-gray-950 border-gray-800 focus:border-purple-500/50"
+                className={`bg-gray-950 border-gray-800 focus:border-purple-500/50 ${errors.experience ? 'border-red-500' : ''}`}
               />
+              {errors.experience && (
+                <p className="text-[10px] text-red-400 font-bold">
+                  {errors.experience}
+                </p>
+              )}
             </div>
           </div>
         </div>
@@ -483,8 +582,13 @@ const CharacterForm = ({ character, onSaved, onCancel, isMaster = true }) => {
                   onChange={handleChange}
                   min={1}
                   max={30}
-                  className="bg-gray-900 border-gray-800 text-center text-2xl font-bold w-full"
+                  className={`bg-gray-900 border-gray-800 text-center text-2xl font-bold w-full ${errors[key] ? 'border-red-500' : ''}`}
                 />
+                {errors[key] && (
+                  <p className="text-[9px] text-red-400 font-bold text-center">
+                    {errors[key]}
+                  </p>
+                )}
               </div>
             ))}
           </div>
@@ -507,8 +611,11 @@ const CharacterForm = ({ character, onSaved, onCancel, isMaster = true }) => {
                 name="hp"
                 value={formData.hp}
                 onChange={handleChange}
-                className="bg-gray-950 border-gray-800 text-red-400 font-bold"
+                className={`bg-gray-950 border-gray-800 text-red-400 font-bold ${errors.hp ? 'border-red-500' : ''}`}
               />
+              {errors.hp && (
+                <p className="text-[9px] text-red-400 font-bold">{errors.hp}</p>
+              )}
             </div>
             <div className="space-y-1.5">
               <Label
@@ -523,8 +630,13 @@ const CharacterForm = ({ character, onSaved, onCancel, isMaster = true }) => {
                 name="max_hp"
                 value={formData.max_hp}
                 onChange={handleChange}
-                className="bg-gray-950 border-gray-800 font-bold"
+                className={`bg-gray-950 border-gray-800 font-bold ${errors.max_hp ? 'border-red-500' : ''}`}
               />
+              {errors.max_hp && (
+                <p className="text-[9px] text-red-400 font-bold">
+                  {errors.max_hp}
+                </p>
+              )}
             </div>
             <div className="space-y-1.5">
               <Label
@@ -539,11 +651,71 @@ const CharacterForm = ({ character, onSaved, onCancel, isMaster = true }) => {
                 name="energy"
                 value={formData.energy}
                 onChange={handleChange}
-                className="bg-gray-950 border-gray-800 text-blue-400 font-bold"
+                className={`bg-gray-950 border-gray-800 text-blue-400 font-bold ${errors.energy ? 'border-red-500' : ''}`}
               />
+              {errors.energy && (
+                <p className="text-[9px] text-red-400 font-bold">{errors.energy}</p>
+              )}
             </div>
           </div>
         </div>
+
+        {/* Monetary Inventory */}
+        {isEdit && (
+          <div>
+            <SectionTitle icon={Zap}>Inventario Monetario</SectionTitle>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-gray-900/40 p-3 rounded-lg border border-gray-800/50">
+              <CoinUpdater
+                type="copper"
+                label="Cobre"
+                amount={formData.copper}
+                onUpdate={(newValue) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    copper: newValue,
+                  }))
+                }
+                colorClass="text-[#b87333]"
+              />
+              <CoinUpdater
+                type="silver"
+                label="Plata"
+                amount={formData.silver}
+                onUpdate={(newValue) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    silver: newValue,
+                  }))
+                }
+                colorClass="text-[#c0c0c0]"
+              />
+              <CoinUpdater
+                type="gold"
+                label="Oro"
+                amount={formData.gold}
+                onUpdate={(newValue) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    gold: newValue,
+                  }))
+                }
+                colorClass="text-[#ffd700]"
+              />
+              <CoinUpdater
+                type="platinum"
+                label="Platino"
+                amount={formData.platinum}
+                onUpdate={(newValue) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    platinum: newValue,
+                  }))
+                }
+                colorClass="text-[#e5e4e2]"
+              />
+            </div>
+          </div>
+        )}
 
         {/* Narrative Section */}
         <div>
@@ -586,18 +758,14 @@ const CharacterForm = ({ character, onSaved, onCancel, isMaster = true }) => {
 
         {/* Sticky footer for submit */}
         <div className="sticky bottom-0 left-0 right-0 p-4 -mx-6 bg-gray-900/95 backdrop-blur-md border-t border-gray-800 z-10 flex gap-4">
-          <Button
-            type="submit"
-            disabled={loading}
-            className="flex-1 bg-purple-900 hover:bg-purple-700 text-white"
-          >
-            <Save className="mr-2 h-4 w-4" />
-            {loading
-              ? 'Procesando...'
-              : isEdit
-                ? 'Guardar Cambios'
-                : 'Crear Héroe'}
-          </Button>
+          {!isEdit && (
+            <Button
+              type="submit"
+              className="flex-1 bg-purple-900 hover:bg-purple-700 text-white"
+            >
+              Crear Héroe
+            </Button>
+          )}
           {onCancel && (
             <Button
               type="button"
@@ -605,7 +773,7 @@ const CharacterForm = ({ character, onSaved, onCancel, isMaster = true }) => {
               onClick={onCancel}
               className="flex-1 bg-red-900/20 border-red-900/50 text-red-400 hover:bg-red-900/40 hover:text-red-300"
             >
-              Cancelar
+              {isEdit ? 'Cerrar' : 'Cancelar'}
             </Button>
           )}
         </div>
@@ -614,4 +782,3 @@ const CharacterForm = ({ character, onSaved, onCancel, isMaster = true }) => {
   );
 };
 
-export { CharacterForm };

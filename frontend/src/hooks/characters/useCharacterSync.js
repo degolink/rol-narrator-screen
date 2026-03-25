@@ -1,5 +1,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import useWebSocket, { ReadyState } from 'react-use-websocket';
+import { dequal } from 'dequal';
+import { WS_BASE_URL } from '../../config';
 
 const CONNECTION_STATUSES = {
   [ReadyState.CONNECTING]: 'Connecting',
@@ -10,13 +12,14 @@ const CONNECTION_STATUSES = {
 };
 
 export function useCharacterSync(characterId) {
+  if (!characterId) {
+    throw new Error('useCharacterSync requires a specific characterId. Use useCharactersListSync for a global pool.');
+  }
+
   const [characterData, setCharacterData] = useState(null);
 
-  // If no characterId is provided, we might connect to a general pool or just not connect.
   const socketUrl = useMemo(() => {
-    return characterId
-      ? `ws://127.0.0.1:8000/ws/characters/${characterId}/`
-      : `ws://127.0.0.1:8000/ws/characters/`;
+    return `${WS_BASE_URL}/characters/${characterId}/`;
   }, [characterId]);
 
   const { lastMessage, readyState, sendJsonMessage } = useWebSocket(socketUrl, {
@@ -29,13 +32,15 @@ export function useCharacterSync(characterId) {
     if (!lastMessage) return;
     try {
       const data = JSON.parse(lastMessage.data);
-      if (data.type === 'character_update') {
-        setCharacterData(data.data);
+      if (data.type === 'character_update' && data.data) {
+        if (!dequal(data.data, characterData)) {
+          setCharacterData(data.data);
+        }
       }
     } catch (e) {
       console.error('Error parsing websocket message', e);
     }
-  }, [lastMessage]);
+  }, [lastMessage, characterData]);
 
   const connectionStatus = CONNECTION_STATUSES[readyState];
 
@@ -47,3 +52,4 @@ export function useCharacterSync(characterId) {
     lastMessage,
   };
 }
+

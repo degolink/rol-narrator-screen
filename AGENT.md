@@ -44,8 +44,11 @@ We use **Sonner** for notifications via `shadcn/ui`. The native Toast component 
 Global Toaster is already configured in `src/App.jsx`.
 Use `apiService` from `src/services/apiService.js` for standardized requests with automatic notifications.
 
+## Global Configuration
+All global environment-independent configuration variables, such as dynamically constructed WebSocket URLs or foundational API base parameters, must be placed in `src/config.js`. Do not inline these properties in individual hooks or components.
+
 ## Frontend Code Style Rules
-- **No `export default`**: Use named exports exclusively (`export function Component() {}` or `export { Component }`) to ensure consistent naming and better refactoring support. Do not use `export default`.
+- **Strict Component Export Pattern**: Use inline named function exports exclusively (`export function Component(...) { ... }`) to ensure consistent naming and better refactoring support. Do not use `export default`, nor the separated pattern (`const Component = (...) => {}; export { Component }`).
 - **Spanish Localization**: All content displayed on the pages must be in Spanish.
 
 ## Python Code Style and Formatting

@@ -2,11 +2,21 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { apiService } from '../services/apiService';
 import { CharacterForm } from '../components/CharacterForm';
+import { useCharacterSync } from '../hooks/characters/useCharacterSync';
 
 export function CharacterDetail() {
   const { id } = useParams();
   const [character, setCharacter] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  // Character-specific sync
+  const { characterData: syncedChar } = useCharacterSync(id);
+
+  useEffect(() => {
+    if (syncedChar) {
+      setCharacter(syncedChar);
+    }
+  }, [syncedChar]);
 
   useEffect(() => {
     const fetchCharacter = async () => {

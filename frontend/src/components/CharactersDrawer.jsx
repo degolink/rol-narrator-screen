@@ -7,9 +7,10 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 
-const CharactersDrawer = ({ isOpen, onClose, mode, character, onSaved }) => {
+export function CharactersDrawer({ isOpen, onClose, mode, character, onSaved }) {
+  if (!isOpen) return null;
   return (
-    <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
+    <Sheet open onOpenChange={(open) => !open && onClose()}>
       <SheetContent className="w-full data-[side=right]:sm:max-w-xl data-[side=right]:md:max-w-2xl data-[side=right]:lg:max-w-3xl bg-gray-900 border-gray-800 text-gray-100 overflow-y-auto p-0 flex flex-col">
         <SheetHeader className="p-6 pb-4 border-b border-gray-800 sticky top-0 bg-gray-900 z-10">
           <SheetTitle
@@ -32,5 +33,3 @@ const CharactersDrawer = ({ isOpen, onClose, mode, character, onSaved }) => {
     </Sheet>
   );
 };
-
-export { CharactersDrawer };

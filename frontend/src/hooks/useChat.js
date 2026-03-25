@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useCharacterSync } from './useCharacterSync';
+import { useCharacterSync } from './characters/useCharacterSync';
 
 export function useChat() {
   const [messages, setMessages] = useState([

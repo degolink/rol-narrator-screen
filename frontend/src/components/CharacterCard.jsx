@@ -54,8 +54,31 @@ const StatCell = ({ label, value }) => (
 );
 
 // ─── Main component ──────────────────────────────────────────────────────────
-const CharacterCard = ({ character, onEdit, onDelete, onToggleVisibility }) => {
+export function CharacterCard({ character, onEdit, onUpdate, onDelete, onToggleVisibility }) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [coinLoading, setCoinLoading] = useState(false);
+
+  const handleCoinChange = async (coinType, newValue) => {
+    setCoinLoading(true);
+    try {
+      const response = await apiService.patchWithNotify(
+        `characters/${character.id}/`,
+        { [coinType]: newValue },
+        'Monedas guardadas',
+        {},
+        {
+          duration: 1000,
+          position: 'top-right',
+          className: 'text-xs p-2 min-h-0',
+        }
+      );
+      if (onUpdate) onUpdate(response.data);
+    } catch (err) {
+      console.error('Error updating coin', err);
+    } finally {
+      setCoinLoading(false);
+    }
+  };
 
   const handleDeleteConfirm = async () => {
     try {
@@ -330,36 +353,36 @@ const CharacterCard = ({ character, onEdit, onDelete, onToggleVisibility }) => {
             </p>
             <div className="grid grid-cols-2 gap-x-4 gap-y-2">
               <CoinUpdater
-                characterId={character.id}
                 type="copper"
                 label="Cobre"
                 amount={character.copper}
-                onUpdate={onEdit}
+                onUpdate={(val) => handleCoinChange('copper', val)}
                 colorClass="text-[#b87333]"
+                loading={coinLoading}
               />
               <CoinUpdater
-                characterId={character.id}
                 type="silver"
                 label="Plata"
                 amount={character.silver}
-                onUpdate={onEdit}
+                onUpdate={(val) => handleCoinChange('silver', val)}
                 colorClass="text-[#c0c0c0]"
+                loading={coinLoading}
               />
               <CoinUpdater
-                characterId={character.id}
                 type="gold"
                 label="Oro"
                 amount={character.gold}
-                onUpdate={onEdit}
+                onUpdate={(val) => handleCoinChange('gold', val)}
                 colorClass="text-[#ffd700]"
+                loading={coinLoading}
               />
               <CoinUpdater
-                characterId={character.id}
                 type="platinum"
                 label="Platino"
                 amount={character.platinum}
-                onUpdate={onEdit}
+                onUpdate={(val) => handleCoinChange('platinum', val)}
                 colorClass="text-[#e5e4e2]"
+                loading={coinLoading}
               />
             </div>
           </div>
@@ -388,4 +411,3 @@ const CharacterCard = ({ character, onEdit, onDelete, onToggleVisibility }) => {
   );
 };
 
-export { CharacterCard };

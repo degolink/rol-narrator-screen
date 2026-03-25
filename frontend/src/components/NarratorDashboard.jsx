@@ -1,16 +1,32 @@
 import React, { useEffect, useState } from 'react';
+import { dequal } from 'dequal';
 import { apiService } from '../services/apiService';
 import { CharacterCard } from './CharacterCard';
 import { CharactersDrawer } from './CharactersDrawer';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
+import { useCharactersListSync } from '../hooks/characters/useCharactersListSync';
 
-const NarratorDashboard = () => {
-  const [characters, setCharacters] = useState([]);
+export function NarratorDashboard() {
   const [loading, setLoading] = useState(true);
   // drawerMode: null | 'create' | 'edit'
   const [drawerMode, setDrawerMode] = useState(null);
   const [editingCharacter, setEditingCharacter] = useState(null);
+
+  // Unified character list sync (Narrator sees all)
+  const { characters, setCharacters } = useCharactersListSync([], {
+    onlyVisible: false,
+  });
+
+  // Keep editingCharacter in sync with the characters list (for real-time updates)
+  useEffect(() => {
+    if (!editingCharacter) return;
+
+    const updated = characters.find((c) => c.id === editingCharacter.id);
+    if (updated && !dequal(updated, editingCharacter)) {
+      setEditingCharacter(updated);
+    }
+  }, [characters, editingCharacter]);
 
   const fetchCharacters = async () => {
     try {
@@ -45,12 +61,15 @@ const NarratorDashboard = () => {
   const handleSaved = (savedChar) => {
     if (drawerMode === 'create') {
       setCharacters((prev) => [savedChar, ...prev]);
+      // After creation, we might want to switch to 'edit' mode for the new char
+      // but the user just said "don't auto close". Let's simply NOT close.
+      setEditingCharacter(savedChar);
+      setDrawerMode('edit');
     } else {
       setCharacters((prev) =>
         prev.map((c) => (c.id === savedChar.id ? savedChar : c)),
       );
     }
-    closeDrawer();
   };
 
   const handleDeleted = (id) => {
@@ -131,6 +150,7 @@ const NarratorDashboard = () => {
                         key={char.id}
                         character={char}
                         onEdit={openEdit}
+                        onUpdate={handleSaved}
                         onDelete={handleDeleted}
                         onToggleVisibility={async (id, currentVis) => {
                           const updated = await apiService.patch(
@@ -167,6 +187,7 @@ const NarratorDashboard = () => {
                         key={char.id}
                         character={char}
                         onEdit={openEdit}
+                        onUpdate={handleSaved}
                         onDelete={handleDeleted}
                         onToggleVisibility={async (id, currentVis) => {
                           const updated = await apiService.patch(
@@ -200,4 +221,3 @@ const NarratorDashboard = () => {
   );
 };
 
-export { NarratorDashboard };

@@ -50,21 +50,21 @@ const apiService = {
   delete: (url, config) => api.delete(url, config),
 
   // Standardized wrappers with success notifications
-  postWithNotify: async (url, data, successMsg, config) => {
+  postWithNotify: async (url, data, successMsg, config, toastOptions) => {
     const res = await api.post(url, data, config);
-    if (successMsg) toast.success(successMsg);
+    if (successMsg) toast.success(successMsg, toastOptions);
     return res;
   },
 
-  patchWithNotify: async (url, data, successMsg, config) => {
+  patchWithNotify: async (url, data, successMsg, config, toastOptions) => {
     const res = await api.patch(url, data, config);
-    if (successMsg) toast.success(successMsg);
+    if (successMsg) toast.success(successMsg, toastOptions);
     return res;
   },
 
-  deleteWithNotify: async (url, successMsg, config) => {
+  deleteWithNotify: async (url, successMsg, config, toastOptions) => {
     const res = await api.delete(url, config);
-    if (successMsg) toast.success(successMsg);
+    if (successMsg) toast.success(successMsg, toastOptions);
     return res;
   },
 };
