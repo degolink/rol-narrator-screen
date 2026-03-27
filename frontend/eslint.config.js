@@ -12,7 +12,10 @@ export default [
     files: ['**/*.{js,jsx}'],
     languageOptions: {
       ecmaVersion: 2020,
-      globals: globals.browser,
+      globals: {
+        ...globals.browser,
+        ...globals.es2020,
+      },
       parserOptions: {
         ecmaVersion: 'latest',
         ecmaFeatures: { jsx: true },
@@ -35,13 +38,14 @@ export default [
       ...react.configs.recommended.rules,
       ...react.configs['jsx-runtime'].rules,
       ...reactHooks.configs.recommended.rules,
+      'no-undef': 'error',
       'no-unused-vars': 'off',
-      'unused-imports/no-unused-imports': 'off',
+      'unused-imports/no-unused-imports': 'error',
       'unused-imports/no-unused-vars': [
-        'warn',
+        'error',
         {
           vars: 'all',
-          varsIgnorePattern: '^[A-Z_]',
+          varsIgnorePattern: '^_',
           args: 'after-used',
           argsIgnorePattern: '^_',
         },
@@ -53,10 +57,11 @@ export default [
       'react/prop-types': 'off',
       'react/no-unescaped-entities': 'off',
       'react-hooks/rules-of-hooks': 'error',
-      'react-hooks/exhaustive-deps': 'warn',
+      'react-hooks/exhaustive-deps': 'error',
       'react-hooks/set-state-in-effect': 'off',
       'react/jsx-uses-react': 'error',
       'react/jsx-uses-vars': 'error',
+      'react/jsx-no-undef': 'error',
     },
   },
   eslintConfigPrettier,

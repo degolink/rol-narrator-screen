@@ -84,7 +84,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             char_name = data.get("character_name")
             if not char_name:
                 char_name = self.user.username or "Dungeon Master"
-            
+
             is_typing = data.get("is_typing", False)
 
             await self.channel_layer.group_send(

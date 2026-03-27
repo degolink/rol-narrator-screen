@@ -1,19 +1,18 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus, Minus } from 'lucide-react';
 
 export function CoinUpdater({
-  type,
   label,
   amount,
   onUpdate,
   colorClass,
   loading = false,
 }) {
-  const handleUpdate = (delta) => {
+  const handleUpdate = useCallback((delta) => {
     const newValue = Math.max(0, amount + delta);
     onUpdate(newValue);
-  };
+  }, [amount, onUpdate]);
 
   return (
     <div className="flex items-center justify-between bg-gray-900/60 p-1.5 px-2 rounded-lg border border-gray-800">

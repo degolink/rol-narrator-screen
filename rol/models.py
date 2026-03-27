@@ -1,10 +1,11 @@
+import uuid
+from datetime import timedelta
+
 from django.contrib.auth.models import User
 from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-import uuid
 from django.utils import timezone
-from datetime import timedelta
 
 
 class Character(models.Model):
@@ -164,7 +165,9 @@ def create_user_profile(sender, instance, created, **kwargs):
 
 
 class MagicToken(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="magic_tokens")
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="magic_tokens"
+    )
     token = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
     created_at = models.DateTimeField(auto_now_add=True)
     expires_at = models.DateTimeField()

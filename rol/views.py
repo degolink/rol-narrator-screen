@@ -1,11 +1,14 @@
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
 from django.conf import settings
 from django.contrib.auth import login
 from django.contrib.auth.models import User
+from django.core.mail import send_mail
 from django.db.models import Q
 from django.utils import timezone
 from rest_framework import filters, pagination, status, viewsets
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -13,8 +16,6 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from .models import Character, ChatMessage, MagicToken, UserProfile
 from .serializers import CharacterSerializer, ChatMessageSerializer, UserSerializer
 
-
-from django.core.mail import send_mail
 
 class RequestMagicLinkView(APIView):
     permission_classes = [AllowAny]
@@ -24,41 +25,49 @@ class RequestMagicLinkView(APIView):
         username = request.data.get("username")
 
         if not email:
-            return Response({"error": "Email is required"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "Email is required"}, status=status.HTTP_400_BAD_REQUEST
+            )
 
         user = User.objects.filter(email=email).first()
-        
+
         if not user:
             if not username:
-                return Response({
-                    "error": "User does not exist. Please provide a username to create an account.",
-                    "code": "USER_NOT_FOUND"
-                }, status=status.HTTP_404_NOT_FOUND)
-            
+                return Response(
+                    {
+                        "error": "User does not exist. Please provide a username to create an account.",
+                        "code": "USER_NOT_FOUND",
+                    },
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+
             if User.objects.filter(username=username).exists():
-                return Response({"error": "Username already taken"}, status=status.HTTP_400_BAD_REQUEST)
-                
+                return Response(
+                    {"error": "Username already taken"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
             user = User.objects.create_user(username=username, email=email)
             # UserProfile is created via signal
-        
+
         # Ensure profile exists
         UserProfile.objects.get_or_create(user=user)
 
         # Create token
         token = MagicToken.objects.create(user=user)
-        
+
         frontend_url = settings.FRONTEND_URL
         login_url = f"{frontend_url}/verify?token={token.token}"
-        
+
         # Send actual email
         subject = "Tu Enlace Mágico para Pantalla de Narrador"
         message = f"Haz clic en el siguiente enlace para iniciar sesión: {login_url}\n\nEste enlace expirará en 15 minutos."
-        
+
         try:
             send_mail(
                 subject,
                 message,
-                None, # Uses DEFAULT_FROM_EMAIL
+                None,  # Uses DEFAULT_FROM_EMAIL
                 [email],
                 fail_silently=False,
             )
@@ -74,31 +83,36 @@ class VerifyMagicLinkView(APIView):
     def get(self, request):
         token_uuid = request.query_params.get("token")
         if not token_uuid:
-            return Response({"error": "Token is required"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "Token is required"}, status=status.HTTP_400_BAD_REQUEST
+            )
 
         try:
             token = MagicToken.objects.get(token=token_uuid)
             if not token.is_valid():
-                return Response({"error": "Token expired"}, status=status.HTTP_400_BAD_REQUEST)
-            
+                return Response(
+                    {"error": "Token expired"}, status=status.HTTP_400_BAD_REQUEST
+                )
+
             user = token.user
             # Generate JWT
             refresh = RefreshToken.for_user(user)
-            
+
             # Delete token after use
             token.delete()
-            
-            return Response({
-                "refresh": str(refresh),
-                "access": str(refresh.access_token),
-                "user": UserSerializer(user).data
-            })
+
+            return Response(
+                {
+                    "refresh": str(refresh),
+                    "access": str(refresh.access_token),
+                    "user": UserSerializer(user).data,
+                }
+            )
         except MagicToken.DoesNotExist:
-            return Response({"error": "Invalid token"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "Invalid token"}, status=status.HTTP_400_BAD_REQUEST
+            )
 
-
-from asgiref.sync import async_to_sync
-from channels.layers import get_channel_layer
 
 class ProfileViewSet(viewsets.GenericViewSet):
     permission_classes = [IsAuthenticated]
@@ -135,7 +149,6 @@ class ProfileViewSet(viewsets.GenericViewSet):
                 },
             )
 
-
         serializer = self.get_serializer(user)
         return Response(serializer.data)
 
@@ -143,15 +156,22 @@ class ProfileViewSet(viewsets.GenericViewSet):
     def assign_character(self, request):
         character_id = request.data.get("character_id")
         if not character_id:
-            return Response({"error": "Character ID is required"}, status=status.HTTP_400_BAD_REQUEST)
-        
+            return Response(
+                {"error": "Character ID is required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         try:
             character = Character.objects.get(id=character_id)
             character.player = request.user
             character.save()
-            return Response({"message": f"Character {character.name} assigned successfully"})
+            return Response(
+                {"message": f"Character {character.name} assigned successfully"}
+            )
         except Character.DoesNotExist:
-            return Response({"error": "Character not found"}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"error": "Character not found"}, status=status.HTTP_404_NOT_FOUND
+            )
 
 
 class CharacterViewSet(viewsets.ModelViewSet):

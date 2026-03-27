@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import * as v from 'valibot';
 import { toast } from 'sonner';
 import { authService } from '../services/authService';
@@ -39,7 +39,7 @@ export function LoginPage() {
     } finally {
       setLoading(false);
     }
-  }, [email, username, showUsername]);
+  }, [email, showUsername, username]);
 
   if (sent) {
     return (

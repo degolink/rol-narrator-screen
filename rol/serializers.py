@@ -1,6 +1,16 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
-from .models import Character, ChatMessage, Condition, InventoryItem, Item, Spell, UserProfile, MagicToken
+
+from .models import (
+    Character,
+    ChatMessage,
+    Condition,
+    InventoryItem,
+    Item,
+    MagicToken,
+    Spell,
+    UserProfile,
+)
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
@@ -16,7 +26,16 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ["id", "username", "email", "first_name", "last_name", "profile", "assigned_characters_count", "first_character_id"]
+        fields = [
+            "id",
+            "username",
+            "email",
+            "first_name",
+            "last_name",
+            "profile",
+            "assigned_characters_count",
+            "first_character_id",
+        ]
 
     def get_assigned_characters_count(self, obj):
         return obj.characters.filter(is_active=True).count()
@@ -102,4 +121,6 @@ class ChatMessageSerializer(serializers.ModelSerializer):
     def get_sender_name(self, obj):
         if obj.sender_character:
             return obj.sender_character.name
-        return obj.sender_user.username or obj.sender_user.first_name or "Dungeon Master"
+        return (
+            obj.sender_user.username or obj.sender_user.first_name or "Dungeon Master"
+        )

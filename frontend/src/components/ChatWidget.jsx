@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useLayoutEffect } from 'react';
+import { useState, useRef, useEffect, useLayoutEffect, useCallback } from 'react';
 import { MessageCircle, X, Send, Maximize2, Minimize2, Ghost, Search, Loader2 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { api } from '@/services/apiService';
@@ -33,18 +33,18 @@ export function ChatWidget() {
   const lastScrollHeightRef = useRef(0);
   const [shouldMaintainScroll, setShouldMaintainScroll] = useState(false);
 
-  useEffect(() => {
-    if (isOpen) fetchUsers();
-  }, [isOpen]);
-
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       const response = await api.get('/characters/');
-      setAvailableUsers(response.data.filter(c => c.player && c.player !== user.id));
+      setAvailableUsers(response.data.filter(c => c.player && user && c.player !== user.id));
     } catch (e) {
       console.error("Failed to fetch users", e);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    if (isOpen) fetchUsers();
+  }, [isOpen, fetchUsers]);
 
   // Handle Loading More - Scroll Preservation
   const handleScroll = (e) => {
