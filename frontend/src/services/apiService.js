@@ -2,8 +2,9 @@ import axios from 'axios';
 import axiosRetry from 'axios-retry';
 import { toast } from 'sonner';
 
-const api = axios.create({
-  baseURL: 'http://localhost:8000/api/',
+export const api = axios.create({
+  baseURL: '/api',
+  withCredentials: true,
 });
 
 // Configure automatic retries
@@ -24,8 +25,8 @@ axiosRetry(api, {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Don't show toast if the request was cancelled
-    if (axios.isCancel(error)) return Promise.reject(error);
+    // Don't show toast if the request was cancelled or if skipToast is set
+    if (axios.isCancel(error) || error.config?.skipToast) return Promise.reject(error);
 
     const message =
       error.response?.data?.detail ||
@@ -34,15 +35,19 @@ api.interceptors.response.use(
       'Ocurrió un error inesperado';
 
     // Show error toast automatically
-    toast.error('Error en la solicitud', {
+    toast.error(error.response?.status === 401 ? 'Sesión expirada' : 'Error en la solicitud', {
       description: message,
     });
+
+    if (error.response?.status === 401) {
+      window.dispatchEvent(new CustomEvent('auth:unauthorized'));
+    }
 
     return Promise.reject(error);
   },
 );
 
-const apiService = {
+export const apiService = {
   get: (url, config) => api.get(url, config),
   post: (url, data, config) => api.post(url, data, config),
   put: (url, data, config) => api.put(url, data, config),
@@ -68,5 +73,3 @@ const apiService = {
     return res;
   },
 };
-
-export { apiService };

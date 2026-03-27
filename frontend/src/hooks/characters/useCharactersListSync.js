@@ -7,14 +7,11 @@ import { WS_BASE_URL } from '../../config';
  * Hook to manage and synchronize a list of characters.
  * Useful for dashboards and character listings.
  */
-export function useCharactersListSync(
-  initialCharacters = [],
-  options = { onlyVisible: false },
-) {
+export function useCharactersListSync(initialCharacters = []) {
   const [characters, setCharacters] = useState(initialCharacters);
 
   const socketUrl = useMemo(() => {
-    return `${WS_BASE_URL}/characters/`;
+    return `${WS_BASE_URL}/characters/all/`;
   }, []);
 
   const { lastMessage } = useWebSocket(socketUrl, {
@@ -41,14 +38,6 @@ export function useCharactersListSync(
           const existingIndex = prev.findIndex((c) => c.id === lastUpdatedChar.id);
           const exists = existingIndex !== -1;
 
-          // Visibility filter logic
-          if (options.onlyVisible && !lastUpdatedChar.visible) {
-            if (exists) {
-              return prev.filter((c) => c.id !== lastUpdatedChar.id);
-            }
-            return prev;
-          }
-
           if (exists) {
             // Prevent redundant updates / loops by deep-comparing the actual object properties
             if (dequal(prev[existingIndex], lastUpdatedChar)) {
@@ -59,18 +48,16 @@ export function useCharactersListSync(
               c.id === lastUpdatedChar.id ? lastUpdatedChar : c,
             );
           } else {
-            // Add new character if it's visible (or if we show everything)
-            if (!options.onlyVisible || lastUpdatedChar.visible) {
-              return [lastUpdatedChar, ...prev];
-            }
-            return prev;
+            // Backend already filtered visibility, so we can just add it
+            return [lastUpdatedChar, ...prev];
           }
         });
       }
     } catch (e) {
       console.error('Error parsing websocket message', e);
     }
-  }, [lastMessage, options.onlyVisible]);
+  }, [lastMessage]);
+
 
   return { characters, setCharacters };
 }

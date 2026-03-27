@@ -1,7 +1,16 @@
+from django.contrib.auth.models import User
 from django.db import models
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+import uuid
+from django.utils import timezone
+from datetime import timedelta
 
 
 class Character(models.Model):
+    player = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="characters", null=True, blank=True
+    )
     # Basic data
     name = models.CharField(max_length=255)
     nickname = models.CharField(max_length=255, blank=True, null=True)
@@ -98,3 +107,75 @@ class InventoryItem(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class ChatMessage(models.Model):
+    MESSAGE_TYPES = (
+        ("IC", "In Character"),
+        ("OOC", "Out of Character"),
+        ("WHISPER", "Whisper"),
+    )
+
+    sender_user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="sent_messages"
+    )
+    sender_character = models.ForeignKey(
+        Character,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="chat_messages",
+    )
+    recipient_user = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="received_whispers",
+    )
+    content = models.TextField()
+    message_type = models.CharField(max_length=10, choices=MESSAGE_TYPES, default="IC")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        sender = (
+            self.sender_character.name
+            if self.sender_character
+            else self.sender_user.username
+        )
+        return f"[{self.message_type}] {sender}: {self.content[:20]}"
+
+
+class UserProfile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
+    is_dungeon_master = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"Profile of {self.user.username}"
+
+
+@receiver(post_save, sender=User)
+def create_user_profile(sender, instance, created, **kwargs):
+    if created:
+        UserProfile.objects.get_or_create(user=instance)
+
+
+class MagicToken(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="magic_tokens")
+    token = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+
+    def save(self, *args, **kwargs):
+        if not self.expires_at:
+            self.expires_at = timezone.now() + timedelta(minutes=15)
+        super().save(*args, **kwargs)
+
+    def is_valid(self):
+        return timezone.now() < self.expires_at
+
+    def __str__(self):
+        return f"Token for {self.user.email} (valid until {self.expires_at})"

@@ -16,11 +16,15 @@ export default defineConfig({
     },
   },
   server: {
-    host: '0.0.0.0',
+    host: true,
     port: 5173,
     strictPort: true,
+    allowedHosts: true, // Allow custom domains
     watch: {
       usePolling: true,
+    },
+    hmr: {
+      clientPort: 443, // Force HMR to use port 443 through Caddy
     },
   },
 });

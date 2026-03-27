@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { dequal } from 'dequal';
-import { apiService } from '../services/apiService';
-import { CharacterCard } from './CharacterCard';
-import { CharactersDrawer } from './CharactersDrawer';
+import { apiService } from '../../services/apiService';
+import { NarratorCharacterCard } from './NarratorCharacterCard';
+import { CharactersDrawer } from '../../components/CharactersDrawer';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
-import { useCharactersListSync } from '../hooks/characters/useCharactersListSync';
+import { useCharactersListSync } from '../../hooks/characters/useCharactersListSync';
 
 export function NarratorDashboard() {
   const [loading, setLoading] = useState(true);
@@ -14,9 +14,7 @@ export function NarratorDashboard() {
   const [editingCharacter, setEditingCharacter] = useState(null);
 
   // Unified character list sync (Narrator sees all)
-  const { characters, setCharacters } = useCharactersListSync([], {
-    onlyVisible: false,
-  });
+  const { characters, setCharacters } = useCharactersListSync([]);
 
   // Keep editingCharacter in sync with the characters list (for real-time updates)
   useEffect(() => {
@@ -59,17 +57,18 @@ export function NarratorDashboard() {
   };
 
   const handleSaved = (savedChar) => {
+    setCharacters((prev) => {
+      const exists = prev.some((c) => c.id === savedChar.id);
+      if (exists) {
+        return prev.map((c) => (c.id === savedChar.id ? savedChar : c));
+      }
+      return [savedChar, ...prev];
+    });
+
     if (drawerMode === 'create') {
-      setCharacters((prev) => [savedChar, ...prev]);
-      // After creation, we might want to switch to 'edit' mode for the new char
-      // but the user just said "don't auto close". Let's simply NOT close.
-      setEditingCharacter(savedChar);
-      setDrawerMode('edit');
-    } else {
-      setCharacters((prev) =>
-        prev.map((c) => (c.id === savedChar.id ? savedChar : c)),
-      );
+      closeDrawer();
     }
+
   };
 
   const handleDeleted = (id) => {
@@ -105,7 +104,7 @@ export function NarratorDashboard() {
         </h1>
         <p className="text-gray-400 text-sm max-w-2xl mx-auto">
           Gestiona tus héroes y villanos, sigue sus estadísticas y mantén el
-          control de la narrativa en tus sesiones de D&D 5e.
+          control de la narrativa en tus sesiones.
         </p>
       </header>
 
@@ -146,7 +145,7 @@ export function NarratorDashboard() {
                   {characters
                     .filter((c) => !c.npc)
                     .map((char) => (
-                      <CharacterCard
+                      <NarratorCharacterCard
                         key={char.id}
                         character={char}
                         onEdit={openEdit}
@@ -183,7 +182,7 @@ export function NarratorDashboard() {
                   {characters
                     .filter((c) => c.npc)
                     .map((char) => (
-                      <CharacterCard
+                      <NarratorCharacterCard
                         key={char.id}
                         character={char}
                         onEdit={openEdit}

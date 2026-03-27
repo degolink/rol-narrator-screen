@@ -1,87 +1,77 @@
 # Rol Narrator Screen
 
-This project is a companion application designed for Dungeons & Dragons Game Masters (Narrators). It allows you to quickly create characters, manage their base stats, and dynamically update resources like hit points and currency (copper, silver, gold, and platinum) through an intuitive React dashboard.
+This project is a companion application designed for Dungeons & Dragons Game Masters (Narrators). It allows you to quickly create characters, manage their base stats, and dynamically update resources like hit points and currency through an intuitive React dashboard.
 
 The application is built using a modern **Django + Django REST Framework** backend, using **PostgreSQL** for the database running inside a Docker Container. The front end is powered by **React**, bootstrapped with Vite.
 
 ## Requirements
 
-Before running the project locally, ensure you have the following installed:
+Before running the project, ensure you have the following installed:
 - [Docker](https://www.docker.com/) and Docker Compose
-- [Python 3.9+](https://www.python.org/)
-- [uv](https://github.com/astral-sh/uv) (for managing Python dependencies quickly)
-- [Node.js](https://nodejs.org/) & `npm`
+
+**Note:** Recommended [Docker Desktop](https://docs.docker.com/get-started/get-docker/)
 
 ---
 
-## 🚀 Setup & Running Locally (Docker Development Environment)
+### 🚀 Setup & Running with Docker
 
-The recommended way to develop this application is using the provided Docker Compose configuration. This setup spins up the entire application stack—Database, Backend, and Frontend—and is configured specifically for local development with **Hot Live-Reload** enabled.
+The project uses **Caddy** as a gateway and provides **automatic HTTPS** for the local domain.
+
+#### 1. Configure Environment Variables
+
+Copy the sample environment file and fill in the values:
 
 ```bash
-# From the project root simply run:
-docker compose up --build
+cp env.sample .env
 ```
 
-### What this does:
-1. **PostgreSQL Database (`db`)**: Starts a container on port `5432` with an initialized database named `rol_narrator_screen`.
-2. **Django Backend (`backend`)**: Builds the Python environment using `uv`, and starts the Django server on `http://localhost:8000`. Your local repository root is mounted as a volume (`.:/app`), meaning that any Python code changes you make will instantly reload the Django server.
-3. **React Frontend (`frontend`)**: Builds the Node environment and starts Vite on `http://localhost:5173`. The `./frontend` directory is mounted into the container (`./frontend:/app`), ensuring that any component or CSS tweaks instantly trigger Vite's Hot Module Replacement (HMR) right in your browser.
+#### 2. Start the Project (Automated)
 
-*Note: You do not need to install Python or Node locally on your host machine to run this project via Docker.*
+To simplify access and configuration, use the provided start script. This script will detect your local IP and automatically activate the alias `pantallanarrador.local` while it's running.
+
+**For normal use:**
+```bash
+./start.sh
+```
+
+**For development (rebuild containers):**
+```bash
+./start.sh --dev
+```
+
+> [!TIP]
+> While the script is running, you can access it from any device on your Wi-Fi at `https://pantallanarrador.local`. When you stop the script (Ctrl+C), the network and Docker services will stop.
 
 ---
-### Running manually without full Docker Compose (Alternative)
+You can use a custom domain by setting the `FRONTEND_DOMAIN` environment variable:
 
-If you only want to use Docker for the database and run the servers manually locally:
+1.  Open your `.env` file.
+2.  Set `FRONTEND_DOMAIN` to your desired domain (e.g., `my-dnd-screen.com`).
+3.  **Caddy** will automatically use this URL to provision SSL certificates and route traffic.
+4.  If you are using a local domain (like the default `pantallanarrador.local`), ensure it resolves correctly to your machine's IP.
 
-#### 1. Database (Docker)
-```bash
-docker compose up -d db
-```
+> [!IMPORTANT]
+> The `FRONTEND_DOMAIN` is used by both the backend (to handle CORS and redirects) and Caddy (to configure the gateway).
 
-### 2. Backend (Django)
+---
+### 🔐 Authentication (Magic Links)
 
-Initialize the Python environment and run the Django API server.
+This project uses a passwordless login system:
 
-```bash
-# Set up virtual environment and install dependencies
-uv venv
-source .venv/bin/activate
-uv pip install -r requirements.txt  # Or manually install django djangorestframework psycopg2-binary django-cors-headers if no requirements file
+1.  Enter your email on the home page.
+2.  If it's your first time, you'll be asked for a username.
+3.  The system will generate an access link (Magic Link).
+4.  **In development:** The link will appear in the terminal where the backend (`rol_backend`) is running.
+5.  Click the link to log in automatically.
 
-# Run database migrations
-python manage.py migrate
-
-# Start the development server (runs on http://localhost:8000)
-python manage.py runserver
-```
-
-### 3. Frontend (React)
-
-Open a new terminal session, navigate to the `frontend` directory, and start the React Vite server.
-
-```bash
-cd frontend
-
-# Install dependencies (only required the first time)
-npm install
-
-# Start the development server (runs on http://localhost:5173 by default)
-npm run dev
-```
+---
+### Ports and Services:
+- **Gateway (Caddy)**: `https://pantallanarrador.local` (Port 443 by default, or your custom `FRONTEND_URL`).
+- **Local Email Service (Mailpit)**: [http://localhost:8025/](http://localhost:8025/) (Access Magic Links here during development).
+- HTTP traffic (80) is automatically redirected to HTTPS.
 
 ---
 
 ## Usage
-
-Once both servers are running:
-1. Open your browser and go to `http://localhost:5173`.
-2. Use the **Crear Personaje** form on the right sidebar to add new characters to your campaign.
-3. Manage their coins in real-time by clicking the `-` and `+` buttons on their character cards.
-4. You can also delete characters that are no longer part of the campaign by clicking the red `X` button on their cards.
-
-## Architecture & Technology Stack
-- **Backend**: Django 4.2+, Django REST Framework (DRF), `django-cors-headers`, `psycopg2-binary`.
-- **Frontend**: React 18, Vite, Axios, Lucide React (optional icons).
-- **Database**: PostgreSQL 15 (Containerized).
+1.  Open your browser at `https://pantallanarrador.local` (or your custom domain).
+2.  Log in with your Magic Link and manage your D&D sessions in real-time.

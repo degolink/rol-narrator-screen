@@ -1,57 +1,101 @@
+import { useMemo } from 'react';
 import { NavLink, Link, useMatch } from 'react-router-dom';
-import { BookOpen, Users } from 'lucide-react';
+import { BookOpen, Users, LogOut, User as UserIcon } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
+import { Button } from './ui/button';
 
 export function NavBar() {
+  const { user, logout } = useAuth();
   const isCharacterDetail = useMatch('/personaje/*');
+  const isLogin = useMatch('/login');
+  const isVerify = useMatch('/verify');
+  const isDM = user?.profile?.is_dungeon_master;
 
-  const navItems = [
-    { path: '/narrador', label: 'Pantalla del Narrador', icon: BookOpen },
-    {
-      path: '/personajes',
-      label: 'Personajes',
-      icon: Users,
-      extraActiveState: !!isCharacterDetail,
-    },
-  ];
+  const navItems = useMemo(() => {
+    if (!user || isLogin || isVerify) return;
 
+    return [
+      ...(isDM ? [{ path: '/narrador', label: 'Narrador', icon: BookOpen }] : []),
+      {
+        path: '/personajes',
+        label: 'Personajes',
+        icon: Users,
+        extraActiveState: !!isCharacterDetail,
+      },
+      { path: '/perfil', label: 'Perfil', icon: UserIcon },
+    ]
+  }, [isLogin, isVerify, isCharacterDetail, isDM]);
+
+  if (!navItems) return null;
   return (
-    <nav className="bg-gray-800 border-b border-gray-700 shadow-sm sticky top-0 z-50">
+    <nav className="bg-[#16161a] border-b border-[#2d2d35] shadow-sm sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex">
             <div className="flex-shrink-0 flex items-center">
               <Link
                 to="/"
-                className="text-xl font-bold text-gray-100 flex items-center gap-2 hover:text-indigo-300 transition-colors"
+                className="text-xl font-black text-white flex items-center gap-2 hover:text-blue-400 transition-all uppercase tracking-tighter"
               >
-                <BookOpen className="w-6 h-6 text-indigo-400" />
-                Pantalla del Narrador
+                <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                  <BookOpen className="w-5 h-5 text-white" />
+                </div>
+                Pantalla De Narrador
               </Link>
             </div>
-            <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
-              {navItems.map((item) => {
-                const Icon = item.icon;
+            {user && (
+              <div className="hidden sm:ml-8 sm:flex sm:space-x-4">
+                {navItems.map((item) => {
+                  const Icon = item.icon;
 
-                return (
-                  <NavLink
-                    key={item.path}
-                    to={item.path}
-                    className={({ isActive }) => {
-                      const active = isActive || item.extraActiveState;
+                  return (
+                    <NavLink
+                      key={item.path}
+                      to={item.path}
+                      className={({ isActive }) => {
+                        const active = isActive || item.extraActiveState;
 
-                      return `inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors ${
-                        active
-                          ? 'border-indigo-500 text-white'
-                          : 'border-transparent text-gray-300 hover:border-gray-300 hover:text-white'
-                      }`;
-                    }}
-                  >
-                    <Icon className="w-4 h-4 mr-2" />
-                    {item.label}
-                  </NavLink>
-                );
-              })}
-            </div>
+                        return `inline-flex items-center px-4 pt-1 border-b-2 text-sm font-bold transition-all ${active
+                          ? 'border-blue-500 text-white bg-blue-500/5'
+                          : 'border-transparent text-gray-500 hover:text-gray-300'
+                          }`;
+                      }}
+                    >
+                      <Icon className="w-4 h-4 mr-2" />
+                      {item.label}
+                    </NavLink>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          <div className="flex items-center gap-4">
+            {user ? (
+              <>
+                <Link to="/perfil" className="flex items-center gap-2 bg-[#1e1e24] px-3 py-1.5 rounded-full border border-[#2d2d35] hover:border-gray-600 transition-all">
+                  <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black ${isDM ? 'bg-red-600 text-white' : 'bg-blue-600 text-white'}`}>
+                    {user.username ? user.username[0].toUpperCase() : 'U'}
+                  </div>
+                  <span className="text-xs font-bold text-gray-300">
+                    {user.username || user.email.split('@')[0]}
+                  </span>
+                </Link>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={logout}
+                  className="text-gray-500 hover:text-red-500 hover:bg-red-500/10 transition-all font-bold uppercase text-[10px] tracking-widest"
+                >
+                  <LogOut className="w-3 h-3 mr-1.5" />
+                  Salir
+                </Button>
+              </>
+            ) : (
+              <Link to="/login">
+                <Button size="sm" className="bg-blue-600 hover:bg-blue-500 font-bold">Entrar</Button>
+              </Link>
+            )}
           </div>
         </div>
       </div>

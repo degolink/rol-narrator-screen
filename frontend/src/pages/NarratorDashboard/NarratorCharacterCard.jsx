@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { toast } from 'sonner';
-import { CoinUpdater } from './CoinUpdater';
-import { apiService } from '../services/apiService';
+import { CoinUpdater } from '../../components/CoinUpdater';
+import { apiService } from '../../services/apiService';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
@@ -53,8 +53,7 @@ const StatCell = ({ label, value }) => (
   </div>
 );
 
-// ─── Main component ──────────────────────────────────────────────────────────
-export function CharacterCard({ character, onEdit, onUpdate, onDelete, onToggleVisibility }) {
+export function NarratorCharacterCard({ character, onEdit, onUpdate, onDelete, onToggleVisibility }) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [coinLoading, setCoinLoading] = useState(false);
 
@@ -102,26 +101,21 @@ export function CharacterCard({ character, onEdit, onUpdate, onDelete, onToggleV
             <DialogTitle className="text-red-400 flex items-center gap-2">
               <Trash2 className="h-5 w-5" /> Eliminar personaje
             </DialogTitle>
-            <DialogDescription className="text-gray-400 pt-2 text-balance">
+            <DialogDescription className="text-gray-400 pt-2">
               ¿Estás seguro de que quieres eliminar a{' '}
-              <span className="text-yellow-300 font-bold">
-                {character.name}
-              </span>
-              ? Esta acción no se puede deshacer.
+              <span className="text-yellow-300 font-bold">{character.name}</span>? Esta acción no se puede deshacer.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="flex gap-2 sm:justify-center mt-4">
             <Button
               variant="outline"
               onClick={() => setShowDeleteDialog(false)}
-              className="border-gray-700 hover:bg-gray-800 text-gray-300"
             >
               Cancelar
             </Button>
             <Button
               variant="destructive"
               onClick={handleDeleteConfirm}
-              className="bg-red-700 hover:bg-red-600"
             >
               Eliminar
             </Button>

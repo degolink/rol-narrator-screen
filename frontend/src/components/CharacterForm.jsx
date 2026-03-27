@@ -24,8 +24,6 @@ import {
   BookOpen,
   Eye,
   EyeOff,
-  Loader2,
-  CheckCircle2,
 } from 'lucide-react';
 
 // ─── D&D 5e valid values ───────────────────────────────────────────────────
@@ -320,6 +318,13 @@ export function CharacterForm({ character, onSaved, onCancel, isMaster = true })
       )}
 
       <form onSubmit={handleCreate} className="space-y-6 pb-20">
+        {errors._general && (
+          <div className="p-3 bg-red-900/30 border border-red-900/50 rounded-lg text-red-200 text-xs font-bold animate-in fade-in slide-in-from-top-2 duration-300">
+            <span className="block mb-1 opacity-70 uppercase tracking-widest text-[10px]">Error de Validación</span>
+            {errors._general}
+          </div>
+        )}
+
         {/* Identity Section */}
         <div>
           <div className="flex justify-between items-center w-full">
@@ -757,26 +762,17 @@ export function CharacterForm({ character, onSaved, onCancel, isMaster = true })
         </div>
 
         {/* Sticky footer for submit */}
-        <div className="sticky bottom-0 left-0 right-0 p-4 -mx-6 bg-gray-900/95 backdrop-blur-md border-t border-gray-800 z-10 flex gap-4">
-          {!isEdit && (
+        {!isEdit && (
+          <div className="sticky bottom-0 left-0 right-0 p-4 -mx-6 bg-gray-900/95 backdrop-blur-md border-t border-gray-800 z-10 flex gap-4">
             <Button
               type="submit"
               className="flex-1 bg-purple-900 hover:bg-purple-700 text-white"
             >
-              Crear Héroe
+              Crear Personaje
             </Button>
-          )}
-          {onCancel && (
-            <Button
-              type="button"
-              variant="destructive"
-              onClick={onCancel}
-              className="flex-1 bg-red-900/20 border-red-900/50 text-red-400 hover:bg-red-900/40 hover:text-red-300"
-            >
-              {isEdit ? 'Cerrar' : 'Cancelar'}
-            </Button>
-          )}
-        </div>
+          </div>
+        )}
+
       </form>
     </>
   );

@@ -1,0 +1,36 @@
+{
+    # Admin is not needed for most dev setups
+    admin off
+}
+
+# The site address. Caddy handles auto-redirect from 80 to 443 
+# when no protocol is specified.
+pantallanarrador.local {
+    tls internal
+
+    # Logging
+    log {
+        output stdout
+    }
+
+    # Proxy for the Backend (API, Admin, Auth, etc)
+    handle /api/* {
+        reverse_proxy backend:8000
+    }
+    handle /admin* {
+        reverse_proxy backend:8000
+    }
+    handle /auth-social* {
+        reverse_proxy backend:8000
+    }
+    
+    # WebSocket Proxy (Django Channels)
+    handle /ws/* {
+        reverse_proxy backend:8000
+    }
+
+    # Proxy for the Frontend (Vite with HMR support)
+    handle {
+        reverse_proxy frontend:5173
+    }
+}

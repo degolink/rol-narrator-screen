@@ -1,6 +1,29 @@
+from django.contrib.auth.models import User
 from rest_framework import serializers
+from .models import Character, ChatMessage, Condition, InventoryItem, Item, Spell, UserProfile, MagicToken
 
-from .models import Character, Condition, InventoryItem, Item, Spell
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserProfile
+        fields = ["is_dungeon_master"]
+
+
+class UserSerializer(serializers.ModelSerializer):
+    profile = UserProfileSerializer(read_only=True)
+    assigned_characters_count = serializers.SerializerMethodField()
+    first_character_id = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = ["id", "username", "email", "first_name", "last_name", "profile", "assigned_characters_count", "first_character_id"]
+
+    def get_assigned_characters_count(self, obj):
+        return obj.characters.filter(is_active=True).count()
+
+    def get_first_character_id(self, obj):
+        first = obj.characters.filter(is_active=True).first()
+        return first.id if first else None
 
 
 class SpellSerializer(serializers.ModelSerializer):
@@ -54,3 +77,29 @@ class CharacterSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(errors)
 
         return data
+
+
+class ChatMessageSerializer(serializers.ModelSerializer):
+    sender_name = serializers.SerializerMethodField()
+    sender_char_id = serializers.IntegerField(
+        source="sender_character.id", read_only=True
+    )
+
+    class Meta:
+        model = ChatMessage
+        fields = [
+            "id",
+            "sender_user",
+            "sender_character",
+            "sender_name",
+            "sender_char_id",
+            "recipient_user",
+            "content",
+            "message_type",
+            "created_at",
+        ]
+
+    def get_sender_name(self, obj):
+        if obj.sender_character:
+            return obj.sender_character.name
+        return obj.sender_user.username or obj.sender_user.first_name or "Dungeon Master"

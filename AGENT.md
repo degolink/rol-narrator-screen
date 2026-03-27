@@ -50,6 +50,13 @@ All global environment-independent configuration variables, such as dynamically 
 ## Frontend Code Style Rules
 - **Strict Component Export Pattern**: Use inline named function exports exclusively (`export function Component(...) { ... }`) to ensure consistent naming and better refactoring support. Do not use `export default`, nor the separated pattern (`const Component = (...) => {}; export { Component }`).
 - **Spanish Localization**: All content displayed on the pages must be in Spanish.
+- **Validation**: Use **Valibot** for frontend data validation instead of manual regex where possible.
+- **Config-Driven Styling**: Avoid passing raw CSS classes or repeating styles when calling components. Instead, use configuration props (e.g., `variant`, `size`, `type`) to select internally defined style sets. This ensures UI consistency and simplifies component usage.
+
+
+## Component Patterns
+- **Shared Components**: Reusable components like `CharacterCard` should be extracted to their own files within the relevant page folder or a shared `components` folder.
+
 
 ## Python Code Style and Formatting
 This project uses **Ruff** for linting and formatting the backend code. All Python code must adhere to the rules defined in `ruff.toml`.
