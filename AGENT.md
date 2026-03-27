@@ -36,8 +36,14 @@ docker compose up --build
 ```
 
 ## Import Aliases
-The frontend uses the `@/` alias pointing to `src/`. This is configured in `vite.config.js` and `jsconfig.json`.
+The frontend uses the `@/` alias pointing to `frontend/src/`. This is configured in `vite.config.js` and `jsconfig.json`.
 Avoid using relative paths for deep imports; use `@/components/ui/...` instead.
+
+## UI Components (shadcn/ui)
+The project uses **shadcn/ui** for its component library.
+- **Location**: Base components are located in `frontend/src/components/ui`.
+- **Primary Usage**: Try to use the components provided in that directory instead of building custom ones.
+- **Styling**: Do NOT override styles with custom classes or ad-hoc Tailwind utilities. Instead, use the component's configurations for different **variants** (e.g., `variant="outline"`, `size="sm"`).
 
 ## Notification System
 We use **Sonner** for notifications via `shadcn/ui`. The native Toast component is deprecated and should not be used.
@@ -51,7 +57,6 @@ All global environment-independent configuration variables, such as dynamically 
 - **Strict Component Export Pattern**: Use inline named function exports exclusively (`export function Component(...) { ... }`) to ensure consistent naming and better refactoring support. Do not use `export default`, nor the separated pattern (`const Component = (...) => {}; export { Component }`).
 - **Spanish Localization**: All content displayed on the pages must be in Spanish.
 - **Validation**: Use **Valibot** for frontend data validation instead of manual regex where possible.
-- **Config-Driven Styling**: Avoid passing raw CSS classes or repeating styles when calling components. Instead, use configuration props (e.g., `variant`, `size`, `type`) to select internally defined style sets. This ensures UI consistency and simplifies component usage.
 
 
 ## Component Patterns
