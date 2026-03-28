@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # Load environment variables from .env if it exists
+echo "🔍 Loading environment..."
 if [ -f .env ]; then
     # Use allexport to load all variables without issues
     set -a
@@ -14,6 +15,8 @@ if [ -z "$FRONTEND_DOMAIN" ]; then
     echo "💡 Set it to your desired domain, e.g., FRONTEND_DOMAIN=pantallanarrador.local"
     exit 1
 fi
+echo "🌐 Domain: $FRONTEND_DOMAIN"
+echo "📡 Detecting local IP address..."
 
 FRONTEND_URL="https://$FRONTEND_DOMAIN"
 
@@ -39,13 +42,30 @@ echo "📍 IP Detected: $LOCAL_IP"
 echo "🌐 URL Front:   $FRONTEND_URL"
 echo "------------------------------------------------"
 
+# Clean up any orphaned dns-sd processes for this domain
+echo "🧹 Cleaning up orphaned dns-sd processes..."
+pkill -f "dns-sd.*$FRONTEND_DOMAIN" 2>/dev/null
+
+# Check current resolution
+echo "👀 Checking DNS resolution for $FRONTEND_DOMAIN..."
+resolved_ip=$(dscacheutil -q host -a name "$FRONTEND_DOMAIN" | grep "ip_address:" | awk '{print $2}' | head -n 1)
+if [ -n "$resolved_ip" ] && [ "$resolved_ip" != "$LOCAL_IP" ]; then
+    echo "⚠️  Warning: $FRONTEND_DOMAIN resolves to $resolved_ip, but current IP is $LOCAL_IP."
+    echo "🧹 Attempting to clear mDNS cache (may require sudo)..."
+    sudo killall -HUP mDNSResponder
+fi
+
 # Create mDNS aliases in the background
 # We publish both port 80 (HTTP) and 443 (HTTPS)
+echo "📢 Advertising services via mDNS..."
 dns-sd -P "Pantalla Narrador HTTP" _http._tcp. . 80 "$FRONTEND_DOMAIN" "$LOCAL_IP" > /dev/null 2>&1 &
 DNS_HTTP_PID=$!
 
 dns-sd -P "Pantalla Narrador HTTPS" _https._tcp. . 443 "$FRONTEND_DOMAIN" "$LOCAL_IP" > /dev/null 2>&1 &
 DNS_HTTPS_PID=$!
+
+# Brief wait to allow dns-sd to register
+sleep 1
 
 # Cleanup function when closing the script
 cleanup() {
@@ -67,5 +87,5 @@ for arg in "$@"; do
     fi
 done
 
-echo "⚙️  Executing: $DOCKER_CMD"
+echo "⚙️  Starting Docker containers: $DOCKER_CMD"
 $DOCKER_CMD
