@@ -1,6 +1,6 @@
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
-from django.db.models.signals import post_save
+from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 
 from .models import Character
@@ -23,4 +23,20 @@ def broadcast_character_update(sender, instance, created, **kwargs):
     # broadcast to an "all" group
     async_to_sync(channel_layer.group_send)(
         "character_all", {"type": "character_update", "data": data}
+    )
+
+
+@receiver(post_delete, sender=Character)
+def broadcast_character_deletion(sender, instance, **kwargs):
+    channel_layer = get_channel_layer()
+
+    # Broadcast deletion to specific character group
+    room_group_name = f"character_{instance.id}"
+    async_to_sync(channel_layer.group_send)(
+        room_group_name, {"type": "character_deleted", "id": instance.id}
+    )
+
+    # broadcast to "all" group
+    async_to_sync(channel_layer.group_send)(
+        "character_all", {"type": "character_deleted", "id": instance.id}
     )

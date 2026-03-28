@@ -53,6 +53,14 @@ class CharacterConsumer(AsyncWebsocketConsumer):
             text_data=json.dumps({"type": "character_update", "data": character_data})
         )
 
+    async def character_deleted(self, event):
+        char_id = event["id"]
+
+        # Send message to WebSocket
+        await self.send(
+            text_data=json.dumps({"type": "character_deleted", "id": char_id})
+        )
+
     # Broadcast chat message to WebSockets in group
     async def chat_message_broadcast(self, event):
         message = event["message"]

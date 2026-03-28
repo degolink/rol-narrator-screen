@@ -134,7 +134,11 @@ class ProfileViewSet(viewsets.GenericViewSet):
             # Update Profile fields
             profile, _ = UserProfile.objects.get_or_create(user=user)
             if "is_dungeon_master" in request.data:
-                profile.is_dungeon_master = request.data["is_dungeon_master"]
+                new_status = request.data["is_dungeon_master"]
+                if new_status != profile.is_dungeon_master:
+                    # Clear characters on any role change
+                    Character.objects.filter(player=user).update(player=None)
+                profile.is_dungeon_master = new_status
                 profile.save()
 
             # Broadcast update to chat
@@ -163,10 +167,16 @@ class ProfileViewSet(viewsets.GenericViewSet):
 
         try:
             character = Character.objects.get(id=character_id)
-            character.player = request.user
+            if character.player == request.user:
+                character.player = None
+                action = "unassigned"
+            else:
+                character.player = request.user
+                action = "assigned"
+
             character.save()
             return Response(
-                {"message": f"Character {character.name} assigned successfully"}
+                {"message": f"Character {character.name} {action} successfully"}
             )
         except Character.DoesNotExist:
             return Response(
@@ -180,7 +190,7 @@ class CharacterViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        queryset = Character.objects.all().order_by("-created_at")
+        queryset = Character.objects.all().order_by("-visible", "name")
         visible_only = self.request.query_params.get("visible", None)
         if visible_only is not None:
             if visible_only.lower() == "true":

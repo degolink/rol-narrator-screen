@@ -74,32 +74,31 @@ export const CharacterSchema = v.pipe(
       (input) => input.hp <= input.max_hp,
       'La vida actual no puede superar la vida máxima',
     ),
-    ['hp']
+    ['hp'],
   ),
   // Conditional validation: Requirements if NOT NPC
   v.forward(
     v.check(
       (input) => input.npc || !!input.char_class,
-      'La clase es requerida para héroes'
+      'La clase es requerida para héroes',
     ),
-    ['char_class']
+    ['char_class'],
   ),
   v.forward(
     v.check(
       (input) => input.npc || !!input.race,
-      'La raza es requerida para héroes'
+      'La raza es requerida para héroes',
     ),
-    ['race']
+    ['race'],
   ),
   v.forward(
     v.check(
       (input) => input.npc || !!input.alignment,
-      'El alineamiento es requerido para héroes'
+      'El alineamiento es requerido para héroes',
     ),
-    ['alignment']
-  )
+    ['alignment'],
+  ),
 );
-
 
 /**
  * Helper to validate character data and return a flat errors object.

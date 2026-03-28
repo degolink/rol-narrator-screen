@@ -36,7 +36,9 @@ export const authService = {
   },
 
   async assignCharacter(characterId) {
-    return api.post('/profile/assign_character/', { character_id: characterId });
+    return api.post('/profile/assign_character/', {
+      character_id: characterId,
+    });
   },
 
   logout() {
@@ -61,7 +63,7 @@ export const authService = {
     if (token) {
       api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     }
-  }
+  },
 };
 
 // Initialize tokens immediately on load to prevent race conditions during mount

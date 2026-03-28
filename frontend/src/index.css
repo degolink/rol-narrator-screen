@@ -52,6 +52,7 @@
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
   --font-sans: 'Outfit Variable', sans-serif;
+  --animate-spin-slow: spin 3s linear infinite;
 }
 
 :root {

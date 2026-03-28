@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { toast } from 'sonner';
-import { CoinUpdater } from '../../components/CoinUpdater';
-import { apiService } from '../../services/apiService';
+import { CoinUpdater } from '../../../components/CoinUpdater';
+import { apiService } from '../../../services/apiService';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
@@ -9,14 +9,6 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
 import {
   Edit2,
   Trash2,
@@ -53,76 +45,54 @@ const StatCell = ({ label, value }) => (
   </div>
 );
 
-export function NarratorCharacterCard({ character, onEdit, onUpdate, onDelete, onToggleVisibility }) {
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+export function NarratorCharacterCard({
+  character,
+  onEdit,
+  setCharacterToDelete,
+}) {
   const [coinLoading, setCoinLoading] = useState(false);
 
-  const handleCoinChange = async (coinType, newValue) => {
-    setCoinLoading(true);
-    try {
-      const response = await apiService.patchWithNotify(
-        `characters/${character.id}/`,
-        { [coinType]: newValue },
-        'Monedas guardadas',
-        {},
-        {
-          duration: 1000,
-          position: 'top-right',
-          className: 'text-xs p-2 min-h-0',
-        }
-      );
-      if (onUpdate) onUpdate(response.data);
-    } catch (err) {
-      console.error('Error updating coin', err);
-    } finally {
-      setCoinLoading(false);
-    }
-  };
+  const handleCoinChange = useCallback(
+    async (coinType, newValue) => {
+      setCoinLoading(true);
+      try {
+        await apiService.patchWithNotify(
+          `characters/${character.id}/`,
+          { [coinType]: newValue },
+          'Monedas guardadas',
+        );
+      } catch (err) {
+        console.error('Error updating coin', err);
+      } finally {
+        setCoinLoading(false);
+      }
+    },
+    [character.id],
+  );
 
-  const handleDeleteConfirm = async () => {
-    try {
-      await apiService.deleteWithNotify(
-        `characters/${character.id}/`,
-        'Personaje eliminado correctamente',
-      );
-      onDelete(character.id);
-    } catch (err) {
-      console.error('Error deleting character', err);
-    } finally {
-      setShowDeleteDialog(false);
-    }
-  };
+  const handleToggleVisibility = useCallback(async () => {
+    await apiService.patch(`characters/${character.id}/`, {
+      visible: !character.visible,
+    });
+  }, [character.id, character.visible]);
+
+  const handleEdit = useCallback(() => {
+    onEdit(character);
+  }, [onEdit, character]);
+
+  const handleDelete = useCallback(() => {
+    setCharacterToDelete(character);
+  }, [setCharacterToDelete, character]);
+
+  const handleShareLink = useCallback(() => {
+    navigator.clipboard.writeText(
+      `${window.location.origin}/personaje/${character.id}`,
+    );
+    toast.success('Enlace copiado al portapapeles');
+  }, [character.id]);
 
   return (
     <>
-      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <DialogContent className="sm:max-w-md bg-gray-900 border-gray-800 text-gray-100">
-          <DialogHeader>
-            <DialogTitle className="text-red-400 flex items-center gap-2">
-              <Trash2 className="h-5 w-5" /> Eliminar personaje
-            </DialogTitle>
-            <DialogDescription className="text-gray-400 pt-2">
-              ¿Estás seguro de que quieres eliminar a{' '}
-              <span className="text-yellow-300 font-bold">{character.name}</span>? Esta acción no se puede deshacer.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="flex gap-2 sm:justify-center mt-4">
-            <Button
-              variant="outline"
-              onClick={() => setShowDeleteDialog(false)}
-            >
-              Cancelar
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleDeleteConfirm}
-            >
-              Eliminar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
       <Card className="bg-gray-800/50 border-gray-700 hover:border-purple-500/50 transition-all duration-300 group overflow-hidden shadow-xl shadow-black/20">
         {/* ── Header ── */}
         <CardHeader className="p-5 pb-4 border-b border-gray-700/50 bg-gray-800/30">
@@ -183,33 +153,28 @@ export function NarratorCharacterCard({ character, onEdit, onUpdate, onDelete, o
               </div>
             </div>
             <div className="flex flex-wrap gap-1 mt-2 sm:mt-0">
-              {onToggleVisibility && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() =>
-                        onToggleVisibility(character.id, character.visible)
-                      }
-                      className={`h-8 w-8 ${character.visible ? 'text-green-400 hover:text-green-300 hover:bg-green-400/10' : 'text-gray-600 hover:text-gray-400 hover:bg-gray-400/10'}`}
-                    >
-                      {character.visible ? (
-                        <Eye className="h-4 w-4" />
-                      ) : (
-                        <EyeOff className="h-4 w-4" />
-                      )}
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>
-                      {character.visible
-                        ? 'Ocultar Personaje'
-                        : 'Hacer Público'}
-                    </p>
-                  </TooltipContent>
-                </Tooltip>
-              )}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={handleToggleVisibility}
+                    className={`h-8 w-8 ${character.visible ? 'text-green-400 hover:text-green-300 hover:bg-green-400/10' : 'text-gray-600 hover:text-gray-400 hover:bg-gray-400/10'}`}
+                  >
+                    {character.visible ? (
+                      <Eye className="h-4 w-4" />
+                    ) : (
+                      <EyeOff className="h-4 w-4" />
+                    )}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>
+                    {character.visible ? 'Ocultar Personaje' : 'Hacer Público'}
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+
               {!character.npc && (
                 <>
                   <Tooltip>
@@ -217,12 +182,7 @@ export function NarratorCharacterCard({ character, onEdit, onUpdate, onDelete, o
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => {
-                          navigator.clipboard.writeText(
-                            `${window.location.origin}/personaje/${character.id}`,
-                          );
-                          toast.success('Enlace copiado al portapapeles');
-                        }}
+                        onClick={handleShareLink}
                         className="h-8 w-8 text-gray-400 hover:text-blue-400 hover:bg-blue-400/10"
                       >
                         <Share2 className="h-4 w-4" />
@@ -255,7 +215,7 @@ export function NarratorCharacterCard({ character, onEdit, onUpdate, onDelete, o
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => onEdit(character)}
+                    onClick={handleEdit}
                     className="h-8 w-8 text-gray-400 hover:text-blue-400 hover:bg-blue-400/10"
                   >
                     <Edit2 className="h-4 w-4" />
@@ -271,7 +231,7 @@ export function NarratorCharacterCard({ character, onEdit, onUpdate, onDelete, o
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => setShowDeleteDialog(true)}
+                    onClick={handleDelete}
                     className="h-8 w-8 text-gray-400 hover:text-red-400 hover:bg-red-400/10"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -347,19 +307,11 @@ export function NarratorCharacterCard({ character, onEdit, onUpdate, onDelete, o
             </p>
             <div className="grid grid-cols-2 gap-x-4 gap-y-2">
               <CoinUpdater
-                type="copper"
-                label="Cobre"
-                amount={character.copper}
-                onUpdate={(val) => handleCoinChange('copper', val)}
-                colorClass="text-[#b87333]"
-                loading={coinLoading}
-              />
-              <CoinUpdater
-                type="silver"
-                label="Plata"
-                amount={character.silver}
-                onUpdate={(val) => handleCoinChange('silver', val)}
-                colorClass="text-[#c0c0c0]"
+                type="platinum"
+                label="Platino"
+                amount={character.platinum}
+                onUpdate={(val) => handleCoinChange('platinum', val)}
+                colorClass="text-[#e5e4e2]"
                 loading={coinLoading}
               />
               <CoinUpdater
@@ -371,11 +323,19 @@ export function NarratorCharacterCard({ character, onEdit, onUpdate, onDelete, o
                 loading={coinLoading}
               />
               <CoinUpdater
-                type="platinum"
-                label="Platino"
-                amount={character.platinum}
-                onUpdate={(val) => handleCoinChange('platinum', val)}
-                colorClass="text-[#e5e4e2]"
+                type="silver"
+                label="Plata"
+                amount={character.silver}
+                onUpdate={(val) => handleCoinChange('silver', val)}
+                colorClass="text-[#c0c0c0]"
+                loading={coinLoading}
+              />
+              <CoinUpdater
+                type="copper"
+                label="Cobre"
+                amount={character.copper}
+                onUpdate={(val) => handleCoinChange('copper', val)}
+                colorClass="text-[#b87333]"
                 loading={coinLoading}
               />
             </div>
@@ -403,5 +363,4 @@ export function NarratorCharacterCard({ character, onEdit, onUpdate, onDelete, o
       </Card>
     </>
   );
-};
-
+}

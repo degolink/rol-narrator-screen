@@ -26,7 +26,8 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     // Don't show toast if the request was cancelled or if skipToast is set
-    if (axios.isCancel(error) || error.config?.skipToast) return Promise.reject(error);
+    if (axios.isCancel(error) || error.config?.skipToast)
+      return Promise.reject(error);
 
     const message =
       error.response?.data?.detail ||
@@ -35,9 +36,14 @@ api.interceptors.response.use(
       'Ocurrió un error inesperado';
 
     // Show error toast automatically
-    toast.error(error.response?.status === 401 ? 'Sesión expirada' : 'Error en la solicitud', {
-      description: message,
-    });
+    toast.error(
+      error.response?.status === 401
+        ? 'Sesión expirada'
+        : 'Error en la solicitud',
+      {
+        description: message,
+      },
+    );
 
     if (error.response?.status === 401) {
       window.dispatchEvent(new CustomEvent('auth:unauthorized'));

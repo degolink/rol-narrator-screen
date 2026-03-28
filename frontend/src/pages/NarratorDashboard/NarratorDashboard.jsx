@@ -1,20 +1,35 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { dequal } from 'dequal';
-import { apiService } from '../../services/apiService';
-import { NarratorCharacterCard } from './NarratorCharacterCard';
-import { CharactersDrawer } from '../../components/CharactersDrawer';
-import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
-import { useCharactersListSync } from '../../hooks/characters/useCharactersListSync';
+import { Button } from '@/components/ui/button';
+import { CharactersDrawer } from './CharactersDrawer';
+import { Header } from '../../components/Header';
+import { useCharacters } from '../../hooks/characters/useCharacters';
+import { NarratorCharacterCard } from './NarratorCharacterCard/NarratorCharacterCard';
+import { DeleteCharacterDialog } from './NarratorCharacterCard/DeleteCharacterDialog';
 
 export function NarratorDashboard() {
-  const [loading, setLoading] = useState(true);
   // drawerMode: null | 'create' | 'edit'
   const [drawerMode, setDrawerMode] = useState(null);
   const [editingCharacter, setEditingCharacter] = useState(null);
+  const [characterToDelete, setCharacterToDelete] = useState();
+  const { loading, characters } = useCharacters();
+  const drawerOpen = drawerMode !== null;
 
-  // Unified character list sync (Narrator sees all)
-  const { characters, setCharacters } = useCharactersListSync([]);
+  const openCreate = useCallback(() => {
+    setEditingCharacter(null);
+    setDrawerMode('create');
+  }, []);
+
+  const openEdit = useCallback((character) => {
+    setEditingCharacter(character);
+    setDrawerMode('edit');
+  }, []);
+
+  const closeDrawer = useCallback(() => {
+    setDrawerMode(null);
+    setEditingCharacter(null);
+  }, []);
 
   // Keep editingCharacter in sync with the characters list (for real-time updates)
   useEffect(() => {
@@ -25,55 +40,6 @@ export function NarratorDashboard() {
       setEditingCharacter(updated);
     }
   }, [characters, editingCharacter]);
-
-  const fetchCharacters = async () => {
-    try {
-      const response = await apiService.get('characters/');
-      setCharacters(response.data);
-    } catch (err) {
-      console.error('Error fetching characters:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchCharacters();
-  }, []);
-
-  const openCreate = () => {
-    setEditingCharacter(null);
-    setDrawerMode('create');
-  };
-
-  const openEdit = (character) => {
-    setEditingCharacter(character);
-    setDrawerMode('edit');
-  };
-
-  const closeDrawer = () => {
-    setDrawerMode(null);
-    setEditingCharacter(null);
-  };
-
-  const handleSaved = (savedChar) => {
-    setCharacters((prev) => {
-      const exists = prev.some((c) => c.id === savedChar.id);
-      if (exists) {
-        return prev.map((c) => (c.id === savedChar.id ? savedChar : c));
-      }
-      return [savedChar, ...prev];
-    });
-
-    if (drawerMode === 'create') {
-      closeDrawer();
-    }
-
-  };
-
-  const handleDeleted = (id) => {
-    setCharacters((prev) => prev.filter((c) => c.id !== id));
-  };
 
   if (loading)
     return (
@@ -87,26 +53,12 @@ export function NarratorDashboard() {
       </div>
     );
 
-  const drawerOpen = drawerMode !== null;
-
   return (
     <div className="px-4 py-6 sm:px-6 lg:px-8 w-full max-w-7xl mx-auto">
-      {/* Header */}
-      <header className="mb-10 text-center">
-        <h1
-          className="text-2xl md:text-4xl font-bold text-yellow-300 mt-6 mb-4"
-          style={{
-            fontFamily: "'Press Start 2P', cursive",
-            textShadow: '0 0 12px rgba(255, 204, 0, 0.4)',
-          }}
-        >
-          Pantalla del Narrador
-        </h1>
-        <p className="text-gray-400 text-sm max-w-2xl mx-auto">
-          Gestiona tus héroes y villanos, sigue sus estadísticas y mantén el
-          control de la narrativa en tus sesiones.
-        </p>
-      </header>
+      <Header
+        title="Pantalla del Narrador"
+        description="Gestiona tus héroes y villanos, sigue sus estadísticas y mantén el control de la narrativa en tus sesiones."
+      />
 
       {/* Main Actions */}
       <div className="flex justify-center mb-10">
@@ -149,19 +101,7 @@ export function NarratorDashboard() {
                         key={char.id}
                         character={char}
                         onEdit={openEdit}
-                        onUpdate={handleSaved}
-                        onDelete={handleDeleted}
-                        onToggleVisibility={async (id, currentVis) => {
-                          const updated = await apiService.patch(
-                            `characters/${id}/`,
-                            { visible: !currentVis },
-                          );
-                          setCharacters((prev) =>
-                            prev.map((c) =>
-                              c.id === updated.data.id ? updated.data : c,
-                            ),
-                          );
-                        }}
+                        setCharacterToDelete={setCharacterToDelete}
                       />
                     ))}
                 </div>
@@ -186,19 +126,7 @@ export function NarratorDashboard() {
                         key={char.id}
                         character={char}
                         onEdit={openEdit}
-                        onUpdate={handleSaved}
-                        onDelete={handleDeleted}
-                        onToggleVisibility={async (id, currentVis) => {
-                          const updated = await apiService.patch(
-                            `characters/${id}/`,
-                            { visible: !currentVis },
-                          );
-                          setCharacters((prev) =>
-                            prev.map((c) =>
-                              c.id === updated.data.id ? updated.data : c,
-                            ),
-                          );
-                        }}
+                        setCharacterToDelete={setCharacterToDelete}
                       />
                     ))}
                 </div>
@@ -214,9 +142,15 @@ export function NarratorDashboard() {
         onClose={closeDrawer}
         mode={drawerMode}
         character={editingCharacter}
-        onSaved={handleSaved}
       />
+
+      {!!characterToDelete && (
+        <DeleteCharacterDialog
+          open={!!characterToDelete}
+          character={characterToDelete}
+          setCharacterToDelete={setCharacterToDelete}
+        />
+      )}
     </div>
   );
-};
-
+}

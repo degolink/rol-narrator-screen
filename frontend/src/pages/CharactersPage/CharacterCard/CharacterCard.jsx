@@ -1,26 +1,41 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
+import { useAuth } from '../../../context/AuthContext';
+import { VisibilityBadge } from './VisibilityBadge';
 
-export function CharacterCard({ char, isMine = false, onClick }) {
+export function CharacterCard({ character, isMine = false, onClick }) {
+  const { isDungeonMaster } = useAuth();
+
+  const handleClick = useCallback(() => {
+    if (onClick) onClick(character.id);
+  }, [onClick, character.id]);
+
   return (
     <Card
-      key={char.id}
+      key={character.id}
       className={`bg-[#16161a] border-[#2d2d35] hover:border-blue-500/50 transition-all duration-300 cursor-pointer shadow-lg ${isMine ? 'ring-2 ring-blue-500/20' : ''}`}
-      onClick={onClick}
+      onClick={handleClick}
     >
       <CardContent className="p-4 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex-1 w-full">
-          <div className="flex flex-wrap items-baseline gap-2">
-            <h3 className="text-lg font-bold text-white">{char.name}</h3>
-            {char.nickname && (
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="text-lg font-bold text-white leading-tight">
+              {character.name}
+            </h3>
+            {character.nickname && (
               <span className="text-sm text-gray-500 italic">
-                "{char.nickname}"
+                "{character.nickname}"
               </span>
             )}
+            <VisibilityBadge
+              visible={character.visible}
+              isDungeonMaster={isDungeonMaster}
+            />
           </div>
-          {(char.char_class || char.race) && (
+          {(character.char_class || character.race) && (
             <p className="text-sm text-gray-500 mt-1 uppercase tracking-widest font-medium">
-              {char.char_class} {char.race ? `· ${char.race}` : ''}
+              {character.char_class}{' '}
+              {character.race ? `· ${character.race}` : ''}
             </p>
           )}
           <div className="mt-3 flex items-center justify-between gap-2 max-w-[280px]">
@@ -29,12 +44,12 @@ export function CharacterCard({ char, isMine = false, onClick }) {
                 <div
                   className="h-full bg-blue-600"
                   style={{
-                    width: `${Math.min(100, ((char.experience || 0) / 355000) * 100)}%`,
+                    width: `${Math.min(100, ((character.experience || 0) / 355000) * 100)}%`,
                   }}
                 ></div>
               </div>
               <span className="text-[10px] text-gray-600 font-mono">
-                {char.experience || 0} XP
+                {character.experience || 0} XP
               </span>
             </div>
           </div>
@@ -44,7 +59,7 @@ export function CharacterCard({ char, isMine = false, onClick }) {
             Niv
           </span>
           <span className="block text-xl font-bold text-white leading-none">
-            {char.level}
+            {character.level}
           </span>
         </div>
       </CardContent>

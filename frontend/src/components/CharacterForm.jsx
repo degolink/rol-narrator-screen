@@ -1,9 +1,14 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { apiService } from '../services/apiService';
-import { levelFromXp, minXpForLevel } from '../utils/levels';
-import { validateCharacter } from '../utils/validation';
 import { dequal } from 'dequal';
-import { CoinUpdater } from './CoinUpdater';
+import {
+  Sparkles,
+  User,
+  Shield,
+  Zap,
+  BookOpen,
+  Eye,
+  EyeOff,
+} from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -16,15 +21,11 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import {
-  Sparkles,
-  User,
-  Shield,
-  Zap,
-  BookOpen,
-  Eye,
-  EyeOff,
-} from 'lucide-react';
+import { apiService } from '../services/apiService';
+import { levelFromXp, minXpForLevel } from '../utils/levels';
+import { validateCharacter } from '../utils/validation';
+import { useAuth } from '../context/AuthContext';
+import { CoinUpdater } from './CoinUpdater';
 
 // ─── D&D 5e valid values ───────────────────────────────────────────────────
 const CLASES = [
@@ -111,14 +112,27 @@ const EMPTY = {
   visible: false,
 };
 
-export function CharacterForm({ character, onSaved, onCancel, isMaster = true }) {
+function SectionTitle({ children, icon: Icon }) {
+  return (
+    <div className="flex items-center gap-2 mb-4 mt-6 first:mt-0">
+      {Icon && <Icon className="h-4 w-4 text-purple-400" />}
+      <h3 className="text-xs font-black uppercase tracking-widest text-purple-300/80">
+        {children}
+      </h3>
+      <div className="h-px flex-1 bg-gradient-to-r from-gray-800 to-transparent"></div>
+    </div>
+  );
+}
+
+export function CharacterForm({ character, close }) {
+  const { isDungeonMaster } = useAuth();
+
   const isEdit = Boolean(character);
   const [formData, setFormData] = useState(
     character ? { ...character } : { ...EMPTY },
   );
   const [levelUpMsg, setLevelUpMsg] = useState(null);
   const [errors, setErrors] = useState({});
-  const [savingStatus, setSavingStatus] = useState('idle'); // 'idle', 'saving', 'saved'
   const formDataRef = useRef(formData);
   const characterRef = useRef(character);
   const isEditRef = useRef(isEdit);
@@ -148,8 +162,13 @@ export function CharacterForm({ character, onSaved, onCancel, isMaster = true })
           if (success) {
             // Fire-and-forget patch
             apiService
-              .patch(`characters/${characterRef.current.id}/`, formDataRef.current)
-              .catch((err) => console.error('Error auto-saving on unmount', err));
+              .patch(
+                `characters/${characterRef.current.id}/`,
+                formDataRef.current,
+              )
+              .catch((err) =>
+                console.error('Error auto-saving on unmount', err),
+              );
           }
         }
       }
@@ -162,7 +181,10 @@ export function CharacterForm({ character, onSaved, onCancel, isMaster = true })
       // To prevent active edits from being overwritten by delayed or irrelevant syncs,
       // we only update if the new character data is genuinely different from what we last
       // synced to the server or received from the server.
-      if (!lastSyncDataRef.current || !dequal(character, lastSyncDataRef.current)) {
+      if (
+        !lastSyncDataRef.current ||
+        !dequal(character, lastSyncDataRef.current)
+      ) {
         setFormData(character);
         lastSyncDataRef.current = character;
       }
@@ -235,10 +257,9 @@ export function CharacterForm({ character, onSaved, onCancel, isMaster = true })
       return;
     }
 
-    setSavingStatus('saving');
     try {
       lastSyncDataRef.current = { ...currentData };
-      const response = await apiService.patchWithNotify(
+      await apiService.patchWithNotify(
         `characters/${currentChar.id}/`,
         currentData,
         'Cambios guardados',
@@ -247,16 +268,12 @@ export function CharacterForm({ character, onSaved, onCancel, isMaster = true })
           duration: 1000,
           position: 'top-right',
           className: 'text-xs p-2 min-h-0',
-        }
+        },
       );
-      setSavingStatus('saved');
-      setTimeout(() => setSavingStatus('idle'), 2000);
-      if (onSaved) onSaved(response.data);
     } catch (err) {
       console.error('Error auto-saving character', err);
-      setSavingStatus('idle');
     }
-  }, [onSaved]);
+  }, []);
 
   useEffect(() => {
     if (!isEdit) return;
@@ -286,28 +303,18 @@ export function CharacterForm({ character, onSaved, onCancel, isMaster = true })
     }
 
     try {
-      const response = await apiService.postWithNotify(
+      await apiService.postWithNotify(
         'characters/',
         formData,
         '¡Héroe creado con éxito!',
       );
       // We do NOT clear the form here, the parent handles closing the drawer
       setErrors({});
-      if (onSaved) onSaved(response.data);
+      if (close) close();
     } catch (err) {
       console.error('Error creating character', err);
     }
   };
-
-  const SectionTitle = ({ children, icon: Icon }) => (
-    <div className="flex items-center gap-2 mb-4 mt-6 first:mt-0">
-      {Icon && <Icon className="h-4 w-4 text-purple-400" />}
-      <h3 className="text-xs font-black uppercase tracking-widest text-purple-300/80">
-        {children}
-      </h3>
-      <div className="h-px flex-1 bg-gradient-to-r from-gray-800 to-transparent"></div>
-    </div>
-  );
 
   return (
     <>
@@ -320,7 +327,9 @@ export function CharacterForm({ character, onSaved, onCancel, isMaster = true })
       <form onSubmit={handleCreate} className="space-y-6 pb-20">
         {errors._general && (
           <div className="p-3 bg-red-900/30 border border-red-900/50 rounded-lg text-red-200 text-xs font-bold animate-in fade-in slide-in-from-top-2 duration-300">
-            <span className="block mb-1 opacity-70 uppercase tracking-widest text-[10px]">Error de Validación</span>
+            <span className="block mb-1 opacity-70 uppercase tracking-widest text-[10px]">
+              Error de Validación
+            </span>
             {errors._general}
           </div>
         )}
@@ -330,7 +339,7 @@ export function CharacterForm({ character, onSaved, onCancel, isMaster = true })
           <div className="flex justify-between items-center w-full">
             <SectionTitle icon={User}>Identidad</SectionTitle>
             <div className="flex flex-col items-end gap-1 relative">
-              {isMaster && (
+              {!!isDungeonMaster && (
                 <div className="flex items-center gap-4 mb-4 mt-6">
                   <div className="flex items-center gap-2">
                     <Label
@@ -659,7 +668,9 @@ export function CharacterForm({ character, onSaved, onCancel, isMaster = true })
                 className={`bg-gray-950 border-gray-800 text-blue-400 font-bold ${errors.energy ? 'border-red-500' : ''}`}
               />
               {errors.energy && (
-                <p className="text-[9px] text-red-400 font-bold">{errors.energy}</p>
+                <p className="text-[9px] text-red-400 font-bold">
+                  {errors.energy}
+                </p>
               )}
             </div>
           </div>
@@ -671,28 +682,16 @@ export function CharacterForm({ character, onSaved, onCancel, isMaster = true })
             <SectionTitle icon={Zap}>Inventario Monetario</SectionTitle>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-gray-900/40 p-3 rounded-lg border border-gray-800/50">
               <CoinUpdater
-                type="copper"
-                label="Cobre"
-                amount={formData.copper}
+                type="platinum"
+                label="Platino"
+                amount={formData.platinum}
                 onUpdate={(newValue) =>
                   setFormData((prev) => ({
                     ...prev,
-                    copper: newValue,
+                    platinum: newValue,
                   }))
                 }
-                colorClass="text-[#b87333]"
-              />
-              <CoinUpdater
-                type="silver"
-                label="Plata"
-                amount={formData.silver}
-                onUpdate={(newValue) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    silver: newValue,
-                  }))
-                }
-                colorClass="text-[#c0c0c0]"
+                colorClass="text-[#e5e4e2]"
               />
               <CoinUpdater
                 type="gold"
@@ -707,16 +706,28 @@ export function CharacterForm({ character, onSaved, onCancel, isMaster = true })
                 colorClass="text-[#ffd700]"
               />
               <CoinUpdater
-                type="platinum"
-                label="Platino"
-                amount={formData.platinum}
+                type="silver"
+                label="Plata"
+                amount={formData.silver}
                 onUpdate={(newValue) =>
                   setFormData((prev) => ({
                     ...prev,
-                    platinum: newValue,
+                    silver: newValue,
                   }))
                 }
-                colorClass="text-[#e5e4e2]"
+                colorClass="text-[#c0c0c0]"
+              />
+              <CoinUpdater
+                type="copper"
+                label="Cobre"
+                amount={formData.copper}
+                onUpdate={(newValue) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    copper: newValue,
+                  }))
+                }
+                colorClass="text-[#b87333]"
               />
             </div>
           </div>
@@ -772,9 +783,7 @@ export function CharacterForm({ character, onSaved, onCancel, isMaster = true })
             </Button>
           </div>
         )}
-
       </form>
     </>
   );
-};
-
+}

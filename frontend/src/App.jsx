@@ -1,6 +1,6 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { NarratorDashboard } from './pages/NarratorDashboard/NarratorDashboard';
-import { CharacterDetail } from './pages/CharacterDetail';
+import { CharacterDetailsPage } from './pages/CharacterDetailsPage';
 import { CharactersPage } from './pages/CharactersPage/CharactersPage';
 import { LoginPage } from './pages/LoginPage';
 import { VerifyPage } from './pages/VerifyPage';
@@ -13,17 +13,13 @@ import { ChatWidget } from './components/ChatWidget';
 import { AuthProvider } from './context/AuthContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { useAuth } from './context/AuthContext';
-
+import { LoadingScreen } from './components/LoadingScreen';
 
 function AppContent() {
   const { user, loading } = useAuth();
 
   if (loading) {
-    return (
-      <div className="bg-[#0a0a0c] min-h-screen flex items-center justify-center">
-        <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-      </div>
-    );
+    return <LoadingScreen />;
   }
 
   return (
@@ -66,7 +62,7 @@ function AppContent() {
               path="/personaje/:id"
               element={
                 <ProtectedRoute>
-                  <CharacterDetail />
+                  <CharacterDetailsPage />
                 </ProtectedRoute>
               }
             />

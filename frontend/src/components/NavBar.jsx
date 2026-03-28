@@ -15,7 +15,9 @@ export function NavBar() {
     if (!user || isLogin || isVerify) return;
 
     return [
-      ...(isDM ? [{ path: '/narrador', label: 'Narrador', icon: BookOpen }] : []),
+      ...(isDM
+        ? [{ path: '/narrador', label: 'Narrador', icon: BookOpen }]
+        : []),
       {
         path: '/personajes',
         label: 'Personajes',
@@ -23,8 +25,8 @@ export function NavBar() {
         extraActiveState: !!isCharacterDetail,
       },
       { path: '/perfil', label: 'Perfil', icon: UserIcon },
-    ]
-  }, [isLogin, isVerify, isCharacterDetail, isDM]);
+    ];
+  }, [user, isLogin, isVerify, isDM, isCharacterDetail]);
 
   if (!navItems) return null;
   return (
@@ -55,10 +57,11 @@ export function NavBar() {
                       className={({ isActive }) => {
                         const active = isActive || item.extraActiveState;
 
-                        return `inline-flex items-center px-4 pt-1 border-b-2 text-sm font-bold transition-all ${active
-                          ? 'border-blue-500 text-white bg-blue-500/5'
-                          : 'border-transparent text-gray-500 hover:text-gray-300'
-                          }`;
+                        return `inline-flex items-center px-4 pt-1 border-b-2 text-sm font-bold transition-all ${
+                          active
+                            ? 'border-blue-500 text-white bg-blue-500/5'
+                            : 'border-transparent text-gray-500 hover:text-gray-300'
+                        }`;
                       }}
                     >
                       <Icon className="w-4 h-4 mr-2" />
@@ -73,8 +76,13 @@ export function NavBar() {
           <div className="flex items-center gap-4">
             {user ? (
               <>
-                <Link to="/perfil" className="flex items-center gap-2 bg-[#1e1e24] px-3 py-1.5 rounded-full border border-[#2d2d35] hover:border-gray-600 transition-all">
-                  <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black ${isDM ? 'bg-red-600 text-white' : 'bg-blue-600 text-white'}`}>
+                <Link
+                  to="/perfil"
+                  className="flex items-center gap-2 bg-[#1e1e24] px-3 py-1.5 rounded-full border border-[#2d2d35] hover:border-gray-600 transition-all"
+                >
+                  <div
+                    className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black ${isDM ? 'bg-red-600 text-white' : 'bg-blue-600 text-white'}`}
+                  >
                     {user.username ? user.username[0].toUpperCase() : 'U'}
                   </div>
                   <span className="text-xs font-bold text-gray-300">
@@ -93,7 +101,12 @@ export function NavBar() {
               </>
             ) : (
               <Link to="/login">
-                <Button size="sm" className="bg-blue-600 hover:bg-blue-500 font-bold">Entrar</Button>
+                <Button
+                  size="sm"
+                  className="bg-blue-600 hover:bg-blue-500 font-bold"
+                >
+                  Entrar
+                </Button>
               </Link>
             )}
           </div>

@@ -1,6 +1,6 @@
 import React from 'react';
 import { X } from 'lucide-react';
-import { CharacterForm } from './CharacterForm';
+import { CharacterForm } from '../../components/CharacterForm';
 import {
   Sheet,
   SheetContent,
@@ -9,8 +9,7 @@ import {
 } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 
-
-export function CharactersDrawer({ isOpen, onClose, mode, character, onSaved }) {
+export function CharactersDrawer({ isOpen, onClose, mode, character }) {
   if (!isOpen) return null;
   return (
     <Sheet open onOpenChange={(open) => !open && onClose()}>
@@ -32,16 +31,14 @@ export function CharactersDrawer({ isOpen, onClose, mode, character, onSaved }) 
           </Button>
         </SheetHeader>
 
-
         <div className="flex-1 p-6">
           <CharacterForm
             key={character?.id ?? 'new'}
             character={character}
-            onSaved={onSaved}
-            onCancel={onClose}
+            close={onClose}
           />
         </div>
       </SheetContent>
     </Sheet>
   );
-};
+}
