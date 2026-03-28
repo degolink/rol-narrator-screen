@@ -4,7 +4,7 @@ import { WS_BASE_URL } from '../config';
 import { api } from '@/services/apiService';
 import { useUser } from '@/context/UserContext';
 
-export function useImmersiveChat() {
+export function useChat() {
   const { character } = useUser();
   const [messages, setMessages] = useState([]);
   const [typingUsers, setTypingUsers] = useState({});
@@ -69,7 +69,6 @@ export function useImmersiveChat() {
         const { user_id, username, is_dungeon_master } = lastJsonMessage;
         setMessages((prev) =>
           prev.map((msg) => {
-            // If message is from this user and NO character was used, update the name
             if (msg.sender_user_id === user_id && !msg.sender_character) {
               return {
                 ...msg,

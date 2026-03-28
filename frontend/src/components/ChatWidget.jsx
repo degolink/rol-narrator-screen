@@ -20,7 +20,7 @@ import { api } from '@/services/apiService';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useImmersiveChat } from '@/hooks/useImmersiveChat';
+import { useChat } from '@/hooks/useChat';
 import { useUser } from '@/context/UserContext';
 import { cn } from '@/lib/cn';
 import { Badge } from '@/components/ui/badge';
@@ -38,7 +38,7 @@ export function ChatWidget() {
     hasMore,
     readyState,
     isInitialLoad,
-  } = useImmersiveChat();
+  } = useChat();
 
   const [isOpen, setIsOpen] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
