@@ -24,7 +24,7 @@ import { Switch } from '@/components/ui/switch';
 import { apiService } from '../services/apiService';
 import { levelFromXp, minXpForLevel } from '../utils/levels';
 import { validateCharacter } from '../utils/validation';
-import { useAuth } from '../context/AuthContext';
+import { useUser } from '../context/UserContext';
 import { CoinUpdater } from './CoinUpdater';
 
 // ─── D&D 5e valid values ───────────────────────────────────────────────────
@@ -125,7 +125,7 @@ function SectionTitle({ children, icon: Icon }) {
 }
 
 export function CharacterForm({ character, close }) {
-  const { isDungeonMaster } = useAuth();
+  const { isDungeonMaster } = useUser();
 
   const isEdit = Boolean(character);
   const [formData, setFormData] = useState(

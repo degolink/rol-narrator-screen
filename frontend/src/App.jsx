@@ -10,13 +10,13 @@ import { NavBar } from './components/NavBar';
 import { Toaster } from './components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { ChatWidget } from './components/ChatWidget';
-import { AuthProvider } from './context/AuthContext';
+import { UserContextProvider } from './context/UserContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
-import { useAuth } from './context/AuthContext';
+import { useUser } from './context/UserContext';
 import { LoadingScreen } from './components/LoadingScreen';
 
 function AppContent() {
-  const { user, loading } = useAuth();
+  const { user, loading } = useUser();
 
   if (loading) {
     return <LoadingScreen />;
@@ -80,9 +80,9 @@ function AppContent() {
 export function App() {
   return (
     <Router>
-      <AuthProvider>
+      <UserContextProvider>
         <AppContent />
-      </AuthProvider>
+      </UserContextProvider>
     </Router>
   );
 }

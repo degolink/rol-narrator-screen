@@ -1,11 +1,11 @@
 import { useMemo } from 'react';
 import { NavLink, Link, useMatch } from 'react-router-dom';
 import { BookOpen, Users, LogOut, User as UserIcon } from 'lucide-react';
-import { useAuth } from '@/context/AuthContext';
+import { useUser } from '@/context/UserContext';
 import { Button } from './ui/button';
 
 export function NavBar() {
-  const { user, logout } = useAuth();
+  const { user, logout } = useUser();
   const isCharacterDetail = useMatch('/personaje/*');
   const isLogin = useMatch('/login');
   const isVerify = useMatch('/verify');

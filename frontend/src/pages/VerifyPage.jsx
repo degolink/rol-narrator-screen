@@ -1,40 +1,46 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
-import { authService } from '../services/authService';
-import { useAuth } from '../context/AuthContext';
+import { useUser } from '../context/UserContext';
 
 export function VerifyPage() {
-  const { login } = useAuth();
+  const { user, loginWithMagicLink } = useUser();
   const [searchParams] = useSearchParams();
-  const [error, setError] = useState(null);
+  const [error, setError] = useState();
   const navigate = useNavigate();
-  const token = searchParams.get('token');
   const calledRef = useRef(false);
+  const token = searchParams.get('token');
 
   useEffect(() => {
-    const verify = async () => {
-      if (!token || calledRef.current) return;
-      calledRef.current = true;
+    if (!token || user) navigate('/', { replace: true });
+  }, [user, token, navigate]);
 
+  useEffect(() => {
+    if (!token || user) return;
+
+    // In local development the useEffect is called twice, so we need to use a ref to prevent the login from being called twice
+    if (calledRef.current) return;
+    calledRef.current = true;
+
+    verify();
+
+    async function verify() {
       try {
-        const user = await authService.verifyMagicLink(token);
-
-        login(user);
-
+        const user = await loginWithMagicLink(token);
         toast.success(`¡Bienvenido ${user.username}!`);
-        navigate('/', { replace: true });
       } catch (err) {
         console.error('VerifyPage: Verification error:', err);
-        setError(err.response?.data?.error || 'Enlace inválido o expirado');
         toast.error('Error de verificación', {
           description: 'El enlace puede haber expirado o ser incorrecto.',
         });
-      }
-    };
 
-    verify();
-  }, [token, navigate, login]);
+        const errorMsg =
+          err.response?.data?.error || 'Enlace inválido o expirado';
+        setError(errorMsg);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#0a0a0c] p-4 text-center">

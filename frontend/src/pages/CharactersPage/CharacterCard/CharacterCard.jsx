@@ -1,10 +1,10 @@
 import React, { useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { useAuth } from '../../../context/AuthContext';
+import { useUser } from '../../../context/UserContext';
 import { VisibilityBadge } from './VisibilityBadge';
 
 export function CharacterCard({ character, isMine = false, onClick }) {
-  const { isDungeonMaster } = useAuth();
+  const { isDungeonMaster } = useUser();
 
   const handleClick = useCallback(() => {
     if (onClick) onClick(character.id);

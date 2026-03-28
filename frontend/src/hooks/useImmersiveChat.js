@@ -2,10 +2,10 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import useWebSocket from 'react-use-websocket';
 import { WS_BASE_URL } from '../config';
 import { api } from '@/services/apiService';
-import { useAuth } from '@/context/AuthContext';
+import { useUser } from '@/context/UserContext';
 
 export function useImmersiveChat() {
-  const { character } = useAuth();
+  const { character } = useUser();
   const [messages, setMessages] = useState([]);
   const [typingUsers, setTypingUsers] = useState({});
   const [nextCursor, setNextCursor] = useState(null);

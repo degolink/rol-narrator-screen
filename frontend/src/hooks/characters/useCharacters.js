@@ -3,7 +3,7 @@ import useWebSocket from 'react-use-websocket';
 import { dequal } from 'dequal';
 import { WS_BASE_URL } from '../../config';
 import { apiService } from '../../services/apiService';
-import { useAuth } from '../../context/AuthContext';
+import { useUser } from '../../context/UserContext';
 
 const SOCKET_URL = `${WS_BASE_URL}/characters/all/`;
 
@@ -15,7 +15,7 @@ export function useCharacters() {
   const [characters, setCharacters] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const { isDungeonMaster } = useAuth();
+  const { isDungeonMaster } = useUser();
 
   const { lastMessage } = useWebSocket(SOCKET_URL, {
     shouldReconnect: () => true,

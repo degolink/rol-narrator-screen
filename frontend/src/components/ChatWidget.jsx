@@ -21,14 +21,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useImmersiveChat } from '@/hooks/useImmersiveChat';
-import { useAuth } from '@/context/AuthContext';
+import { useUser } from '@/context/UserContext';
 import { cn } from '@/lib/cn';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 
 export function ChatWidget() {
-  const { user } = useAuth();
+  const { user } = useUser();
   const {
     messages,
     typingUsers,

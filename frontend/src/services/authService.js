@@ -2,7 +2,6 @@ import { api } from './apiService';
 
 const TOKEN_KEY = 'rol_access_token';
 const REFRESH_KEY = 'rol_refresh_token';
-const USER_KEY = 'rol_user_data';
 
 export const authService = {
   async requestMagicLink(email, username) {
@@ -10,12 +9,19 @@ export const authService = {
   },
 
   async verifyMagicLink(token) {
+    if (!token) {
+      throw new Error('Token invalido');
+    }
+
     const response = await api.get(`/auth/verify/?token=${token}`);
     const { access, refresh, user } = response.data;
 
+    if (!user) {
+      throw new Error('No se pudo traer la informacion del usuario');
+    }
+
     localStorage.setItem(TOKEN_KEY, access);
     localStorage.setItem(REFRESH_KEY, refresh);
-    localStorage.setItem(USER_KEY, JSON.stringify(user));
 
     // Set default auth header for subsequent requests
     api.defaults.headers.common['Authorization'] = `Bearer ${access}`;
@@ -25,13 +31,11 @@ export const authService = {
 
   async getProfile() {
     const response = await api.get('/profile/me/');
-    localStorage.setItem(USER_KEY, JSON.stringify(response.data));
     return response.data;
   },
 
   async updateProfile(data) {
     const response = await api.patch('/profile/me/', data);
-    localStorage.setItem(USER_KEY, JSON.stringify(response.data));
     return response.data;
   },
 
@@ -44,14 +48,8 @@ export const authService = {
   logout() {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(REFRESH_KEY);
-    localStorage.removeItem(USER_KEY);
     delete api.defaults.headers.common['Authorization'];
     window.location.href = '/login';
-  },
-
-  getCurrentUser() {
-    const user = localStorage.getItem(USER_KEY);
-    return user ? JSON.parse(user) : null;
   },
 
   isAuthenticated() {

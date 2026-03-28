@@ -1,9 +1,9 @@
 import { Navigate, useLocation } from 'react-router-dom';
-import { useAuth } from '@/context/AuthContext';
+import { useUser } from '@/context/UserContext';
 import { LoadingScreen } from './LoadingScreen';
 
 export function ProtectedRoute({ children }) {
-  const { user, loading } = useAuth();
+  const { user, loading } = useUser();
   const location = useLocation();
 
   if (loading) {

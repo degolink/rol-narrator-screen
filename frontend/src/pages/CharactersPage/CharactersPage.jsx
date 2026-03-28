@@ -1,12 +1,12 @@
 import React from 'react';
 import { useCharacters } from '../../hooks/characters/useCharacters';
-import { useAuth } from '../../context/AuthContext';
+import { useUser } from '../../context/UserContext';
 import { CharacterCardsSection } from './CharacterCardsSection';
 import { Header } from '../../components/Header';
 import { LoadingScreen } from '../../components/LoadingScreen';
 
 export function CharactersPage() {
-  const { user } = useAuth();
+  const { user } = useUser();
   const { characters, loading } = useCharacters();
 
   if (loading) {

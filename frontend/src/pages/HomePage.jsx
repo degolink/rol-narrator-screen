@@ -1,8 +1,8 @@
 import { Navigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useUser } from '../context/UserContext';
 
 export function HomePage() {
-  const { user, loading } = useAuth();
+  const { user, loading } = useUser();
 
   if (loading) return null;
   if (!user) return <Navigate to="/login" />;

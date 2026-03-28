@@ -1,13 +1,16 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import * as v from 'valibot';
 import { toast } from 'sonner';
-import { authService } from '../services/authService';
+import { useNavigate } from 'react-router-dom';
+import { useUser } from '../context/UserContext';
 
 function validateEmail(email) {
   return v.safeParse(v.pipe(v.string(), v.email()), email).success;
 }
 
 export function LoginPage() {
+  const navigate = useNavigate();
+  const { user, requestMagicLink } = useUser();
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
   const [showUsername, setShowUsername] = useState(false);
@@ -25,10 +28,7 @@ export function LoginPage() {
 
       setLoading(true);
       try {
-        await authService.requestMagicLink(
-          email,
-          showUsername ? username : undefined,
-        );
+        await requestMagicLink(email, showUsername ? username : undefined);
         setSent(true);
         toast.success('¡Enlace enviado!', {
           description:
@@ -46,8 +46,12 @@ export function LoginPage() {
         setLoading(false);
       }
     },
-    [email, showUsername, username],
+    [email, showUsername, username, requestMagicLink],
   );
+
+  useEffect(() => {
+    if (user) navigate('/', { replace: true });
+  }, [user, navigate]);
 
   if (sent) {
     return (

@@ -1,10 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Header } from '../components/Header';
 import { toast } from 'sonner';
-import { authService } from '../services/authService';
-import { api } from '../services/apiService';
-import { useAuth } from '../context/AuthContext';
+import { useUser } from '../context/UserContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -20,53 +18,30 @@ import {
   CardFooter,
 } from '@/components/ui/card';
 import { cn } from '@/lib/cn';
+import { useCharacters } from '@/hooks/characters/useCharacters';
 
 export function ProfilePage() {
-  const { user: authUser, setUser: setAuthUser } = useAuth();
-  const [user, setUser] = useState(authUser || authService.getCurrentUser());
-  const [allCharacters, setAllCharacters] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
   const [saving, setSaving] = useState(false);
   const [togglingRole, setTogglingRole] = useState(false);
-  const navigate = useNavigate();
 
-  // Form states
-  const [username, setUsername] = useState(user?.username || '');
-  const [email, setEmail] = useState(user?.email || '');
-
+  const { user, updateUser, assignCharacterToUser } = useUser();
   const isDungeonMaster = user?.profile?.is_dungeon_master;
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [profileData, charsData] = await Promise.all([
-          authService.getProfile(),
-          api.get('/characters/?visible=true'),
-        ]);
-        setUser(profileData);
-        setAllCharacters(charsData.data);
+  const { characters } = useCharacters();
+  const playerCharacters = useMemo(
+    () => characters.filter((c) => !c.npc),
+    [characters],
+  );
 
-        setUsername(profileData.username);
-        setEmail(profileData.email);
-      } catch {
-        toast.error('Error al cargar datos del perfil');
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, []);
+  const [username, setUsername] = useState(user.username);
+  const [email, setEmail] = useState(user.email);
 
   const handleUpdateProfile = async (e) => {
     e.preventDefault();
     setSaving(true);
     try {
-      const updatedUser = await authService.updateProfile({
-        username,
-        email,
-      });
-      setUser(updatedUser);
-      setAuthUser(updatedUser);
+      await updateUser({ username, email });
       toast.success('Perfil actualizado correctamente');
     } catch {
       toast.error('Error al actualizar el perfil');
@@ -78,15 +53,7 @@ export function ProfilePage() {
   const handleToggleDungeonMaster = async (checked) => {
     setTogglingRole(true);
     try {
-      const updatedUser = await authService.updateProfile({
-        is_dungeon_master: checked,
-      });
-      setUser(updatedUser);
-      setAuthUser(updatedUser);
-
-      // Refresh characters list since some might have been unassigned if user became DM
-      const charsData = await api.get('/characters/?visible=true');
-      setAllCharacters(charsData.data);
+      await updateUser({ is_dungeon_master: checked });
 
       toast.success(
         checked
@@ -102,36 +69,19 @@ export function ProfilePage() {
 
   const handleAssignCharacter = async (charId) => {
     try {
-      await authService.assignCharacter(charId);
+      await assignCharacterToUser(charId);
       toast.success('Personaje reclamado correctamente');
-
-      // Refresh user and characters to update assignments
-      const [profileData, charsData] = await Promise.all([
-        authService.getProfile(),
-        api.get('/characters/?visible=true'),
-      ]);
-      setUser(profileData);
-      setAuthUser(profileData);
-      setAllCharacters(charsData.data);
     } catch {
       toast.error('Error al reclamar el personaje');
     }
   };
 
-  if (loading)
-    return (
-      <div className="min-h-screen bg-transparent flex items-center justify-center">
-        <div className="w-10 h-10 border-4 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
-      </div>
-    );
-
   return (
     <div className="px-4 py-6 sm:px-6 lg:px-8 w-full max-w-4xl mx-auto pb-20">
       <div className="space-y-10">
-        {/* Header */}
-        <Header 
-          title="MI PERFIL" 
-          description="Gestiona tu identidad y tus roles en la plataforma." 
+        <Header
+          title="MI PERFIL"
+          description="Gestiona tu identidad y tus roles en la plataforma."
         />
 
         <div className="space-y-10">
@@ -152,24 +102,28 @@ export function ProfilePage() {
                 className="grid grid-cols-1 md:grid-cols-2 gap-6"
               >
                 <div className="space-y-2">
-                  <Label htmlFor="username" className="text-gray-300">Nombre de Usuario</Label>
+                  <Label htmlFor="username" className="text-gray-300">
+                    Nombre de Usuario
+                  </Label>
                   <Input
                     id="username"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     placeholder="Tu nombre de héroe"
-                    className="bg-gray-900/50 border-gray-700 focus:border-purple-500/50 transition-colors"
+                    className="bg-gray-900/50 border-gray-700 focus:border-purple-500/50 transition-colors text-white"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="email" className="text-gray-300">Correo Electrónico</Label>
+                  <Label htmlFor="email" className="text-gray-300">
+                    Correo Electrónico
+                  </Label>
                   <Input
                     id="email"
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="correo@ejemplo.com"
-                    className="bg-gray-900/50 border-gray-700 focus:border-purple-500/50 transition-colors"
+                    className="bg-gray-900/50 border-gray-700 focus:border-purple-500/50 transition-colors text-white"
                   />
                 </div>
                 <div className="md:col-span-2 pt-2">
@@ -271,93 +225,83 @@ export function ProfilePage() {
                 <CardContent className="p-0">
                   <ScrollArea className="h-[500px] w-full p-4">
                     <div className="grid gap-4">
-                      {allCharacters
-                        .filter((c) => !c.npc)
-                        .map((char) => {
-                          const isAssignedToMe = char.player === user.id;
-                          const isAssignedToOther =
-                            char.player && char.player !== user.id;
+                      {playerCharacters.map((char) => {
+                        const isAssignedToMe = char.player === user.id;
+                        const isAssignedToOther =
+                          char.player && char.player !== user.id;
 
-                          return (
-                            <div
-                              key={char.id}
-                              className={cn(
-                                'flex items-center justify-between p-5 rounded-2xl border transition-all group',
-                                isAssignedToMe
-                                  ? 'bg-purple-500/20 border-purple-500/40 shadow-lg shadow-purple-900/20'
-                                  : 'bg-gray-900/40 border-gray-700/50 hover:bg-gray-800/60 hover:border-purple-500/30',
-                              )}
-                            >
-                              <div className="flex flex-col gap-1">
-                                <div className="flex items-center gap-3">
-                                  <span className="font-bold text-xl leading-tight tracking-tight text-gray-100">
-                                    {char.name}
-                                  </span>
-                                  {isAssignedToMe && (
-                                    <Badge className="bg-purple-600 text-white border-0 hover:bg-purple-700 px-3">
-                                      Tu Héroe
-                                    </Badge>
-                                  )}
-                                </div>
-                                <div className="flex items-center gap-2 mt-1">
-                                  <Badge
-                                    variant="outline"
-                                    className="text-[10px] font-bold uppercase tracking-widest py-0 border-gray-700 text-gray-400"
-                                  >
-                                    {char.char_class}
+                        return (
+                          <div
+                            key={char.id}
+                            className={cn(
+                              'flex items-center justify-between p-5 rounded-2xl border transition-all group',
+                              isAssignedToMe
+                                ? 'bg-purple-500/20 border-purple-500/40 shadow-lg shadow-purple-900/20'
+                                : 'bg-gray-900/40 border-gray-700/50 hover:bg-gray-800/60 hover:border-purple-500/30',
+                            )}
+                          >
+                            <div className="flex flex-col gap-1">
+                              <div className="flex items-center gap-3">
+                                <span className="font-bold text-xl leading-tight tracking-tight text-gray-100">
+                                  {char.name}
+                                </span>
+                                {isAssignedToMe && (
+                                  <Badge className="bg-purple-600 text-white border-0 hover:bg-purple-700 px-3">
+                                    Tu Héroe
                                   </Badge>
-                                  <div className="w-1 h-1 rounded-full bg-muted-foreground/30"></div>
-                                  <span className="text-xs text-muted-foreground font-medium italic">
-                                    {char.race}
-                                  </span>
-                                </div>
-                              </div>
-
-                              <div className="flex items-center gap-2">
-                                {isAssignedToMe ? (
-                                  <div
-                                    className="flex flex-col items-end gap-1 cursor-pointer hover:opacity-70 transition-opacity"
-                                    onClick={() =>
-                                      handleAssignCharacter(char.id)
-                                    }
-                                  >
-                                    <Badge
-                                      variant="outline"
-                                      className="text-purple-400 border-purple-500/30 bg-purple-500/5"
-                                    >
-                                      Asignado
-                                    </Badge>
-                                    <span className="text-[10px] text-gray-500 font-bold tracking-tighter uppercase">
-                                      Clic para liberar
-                                    </span>
-                                  </div>
-                                ) : (
-                                  <Button
-                                    size="sm"
-                                    variant={
-                                      isAssignedToOther
-                                        ? 'secondary'
-                                        : 'default'
-                                    }
-                                    onClick={() =>
-                                      handleAssignCharacter(char.id)
-                                    }
-                                    className={cn(
-                                      'font-black rounded-lg px-6',
-                                      isAssignedToOther
-                                        ? 'bg-gray-800 text-gray-600 border-gray-700'
-                                        : 'bg-purple-600 hover:bg-purple-500 text-white shadow-lg shadow-purple-900/40',
-                                    )}
-                                  >
-                                    {isAssignedToOther
-                                      ? 'Arrebatar'
-                                      : 'Reclamar'}
-                                  </Button>
                                 )}
                               </div>
+                              <div className="flex items-center gap-2 mt-1">
+                                <Badge
+                                  variant="outline"
+                                  className="text-[10px] font-bold uppercase tracking-widest py-0 border-gray-700 text-gray-400"
+                                >
+                                  {char.char_class}
+                                </Badge>
+                                <div className="w-1 h-1 rounded-full bg-muted-foreground/30"></div>
+                                <span className="text-xs text-muted-foreground font-medium italic">
+                                  {char.race}
+                                </span>
+                              </div>
                             </div>
-                          );
-                        })}
+
+                            <div className="flex items-center gap-2">
+                              {isAssignedToMe ? (
+                                <div
+                                  className="flex flex-col items-end gap-1 cursor-pointer hover:opacity-70 transition-opacity"
+                                  onClick={() => handleAssignCharacter(char.id)}
+                                >
+                                  <Badge
+                                    variant="outline"
+                                    className="text-purple-400 border-purple-500/30 bg-purple-500/5"
+                                  >
+                                    Asignado
+                                  </Badge>
+                                  <span className="text-[10px] text-gray-500 font-bold tracking-tighter uppercase">
+                                    Clic para liberar
+                                  </span>
+                                </div>
+                              ) : (
+                                <Button
+                                  size="sm"
+                                  variant={
+                                    isAssignedToOther ? 'secondary' : 'default'
+                                  }
+                                  onClick={() => handleAssignCharacter(char.id)}
+                                  className={cn(
+                                    'font-black rounded-lg px-6',
+                                    isAssignedToOther
+                                      ? 'bg-gray-800 text-gray-600 border-gray-700'
+                                      : 'bg-purple-600 hover:bg-purple-500 text-white shadow-lg shadow-purple-900/40',
+                                  )}
+                                >
+                                  {isAssignedToOther ? 'Arrebatar' : 'Reclamar'}
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   </ScrollArea>
                 </CardContent>
