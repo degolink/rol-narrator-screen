@@ -4,9 +4,9 @@ services:
     image: postgres:15
     container_name: rol_db
     environment:
-      POSTGRES_USER: rol_user
-      POSTGRES_PASSWORD: rol_password
-      POSTGRES_DB: rol_narrator_screen
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
     ports:
       - "5432:5432"
     volumes:
@@ -15,8 +15,6 @@ services:
   redis:
     image: redis:7-alpine
     container_name: rol_redis
-    ports:
-      - "6379:6379"
 
   backend:
     build: 
@@ -32,7 +30,6 @@ services:
       DB_HOST: db
       DB_PORT: 5432
       REDIS_HOST: redis
-      REDIS_PORT: 6379
       # Ensures Python logs are sent straight to the terminal without buffering
       PYTHONUNBUFFERED: 1
 
@@ -65,7 +62,6 @@ services:
     environment:
       - MP_WEBROOT=/email
     ports:
-      - "8025:8025"
       - "1025:1025"
 
 volumes:
