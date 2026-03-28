@@ -61,13 +61,13 @@ This project uses a passwordless login system:
 1.  Enter your email on the home page.
 2.  If it's your first time, you'll be asked for a username.
 3.  The system will generate an access link (Magic Link).
-4.  **In development:** The link will appear in the terminal where the backend (`rol_backend`) is running.
+4.  **In development:** You can access the Magic Link at [https://pantallanarrador.local/email](https://pantallanarrador.local/email).
 5.  Click the link to log in automatically.
 
 ---
 ### Ports and Services:
 - **Gateway (Caddy)**: `https://pantallanarrador.local` (Port 443 by default, or your custom `FRONTEND_URL`).
-- **Local Email Service (Mailpit)**: [http://localhost:8025/](http://localhost:8025/) (Access Magic Links here during development).
+- **Local Email Service (Mailpit)**: [https://pantallanarrador.local/email](https://pantallanarrador.local/email) (Access Magic Links here during development).
 - HTTP traffic (80) is automatically redirected to HTTPS.
 
 ---

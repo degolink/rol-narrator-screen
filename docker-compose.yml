@@ -62,6 +62,8 @@ services:
   mailpit:
     image: axllent/mailpit
     container_name: rol_mailpit
+    environment:
+      - MP_WEBROOT=/email
     ports:
       - "8025:8025"
       - "1025:1025"
