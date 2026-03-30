@@ -62,9 +62,7 @@ export function UserContextProvider({ children }) {
   }, []);
 
   const assignCharacterToUser = useCallback(async (characterId) => {
-    return await authService.post('/profile/assign_character/', {
-      character_id: characterId,
-    });
+    return await authService.assignCharacter(characterId);
   }, []);
 
   const loginWithMagicLink = useCallback(async (token) => {
