@@ -6,7 +6,6 @@ import {
   useCallback,
   useMemo,
 } from 'react';
-import { useLocation } from 'react-router-dom';
 import useWebSocket from 'react-use-websocket';
 import { dequal } from 'dequal';
 import { WS_BASE_URL } from '../config';
@@ -15,7 +14,6 @@ import { authService } from '../services/authService';
 const UserContext = createContext();
 
 export function UserContextProvider({ children }) {
-  const location = useLocation();
   const [user, setUser] = useState();
   const [loading, setLoading] = useState(true);
   const isDungeonMaster = user?.profile?.is_dungeon_master;
@@ -49,7 +47,7 @@ export function UserContextProvider({ children }) {
   }, []);
 
   const logout = useCallback(async () => {
-    await authService.logout();
+    await authService.logout().catch(() => {});
     setUser(undefined);
   }, []);
 
@@ -78,23 +76,17 @@ export function UserContextProvider({ children }) {
 
   useEffect(() => {
     // Initialize tokens and check if user is logged in
-    const initAuth = async () => {
-      // The profile check will fail with 401 if the cookie is invalid/expired, 
+    async function initAuth() {
+      // The profile check will fail with 401 if the cookie is invalid/expired,
       // which will trigger handleUnauthorized.
       await refreshUser().catch(() => {});
       setLoading(false);
-    };
+    }
 
-    const handleUnauthorized = () => {
+    function handleUnauthorized() {
       console.warn('AuthContext: Received auth:unauthorized');
       setUser(undefined);
-      
-      // Only redirect to login if we're not already on a public page
-      const publicPaths = ['/login', '/verify'];
-      if (!publicPaths.includes(location.pathname)) {
-        authService.logout();
-      }
-    };
+    }
 
     window.addEventListener('auth:unauthorized', handleUnauthorized);
     initAuth();

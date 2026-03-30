@@ -47,7 +47,10 @@ api.interceptors.response.use(
       },
     );
 
-    if (error.response?.status === 401) {
+    if (
+      error.response?.status === 401 &&
+      !error.config?.url?.includes('/auth/logout/')
+    ) {
       window.dispatchEvent(new CustomEvent('auth:unauthorized'));
     }
 
