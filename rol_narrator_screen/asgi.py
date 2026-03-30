@@ -9,22 +9,24 @@ https://docs.djangoproject.com/en/4.2/howto/deployment/asgi/
 
 import os
 
-from channels.auth import AuthMiddlewareStack
-from channels.routing import ProtocolTypeRouter, URLRouter
-from channels.security.websocket import AllowedHostsOriginValidator
 from django.core.asgi import get_asgi_application
 
+# Set settings before initializing any Django-related code
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "rol_narrator_screen.settings")
-
 django_asgi_app = get_asgi_application()
 
+# Import Channels and middleware after Django is ready
+from channels.routing import ProtocolTypeRouter, URLRouter
+from channels.security.websocket import AllowedHostsOriginValidator
+
+from rol.middleware import JWTAuthMiddleware
 import rol.routing  # noqa: E402
 
 application = ProtocolTypeRouter(
     {
         "http": django_asgi_app,
         "websocket": AllowedHostsOriginValidator(
-            AuthMiddlewareStack(URLRouter(rol.routing.websocket_urlpatterns))
+            JWTAuthMiddleware(URLRouter(rol.routing.websocket_urlpatterns))
         ),
     }
 )

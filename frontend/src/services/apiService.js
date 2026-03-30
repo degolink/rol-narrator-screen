@@ -5,6 +5,8 @@ import { toast } from 'sonner';
 export const api = axios.create({
   baseURL: '/api',
   withCredentials: true,
+  xsrfCookieName: 'csrftoken',
+  xsrfHeaderName: 'X-CSRFToken',
 });
 
 // Configure automatic retries

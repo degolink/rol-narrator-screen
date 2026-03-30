@@ -19,4 +19,4 @@ COPY requirements.txt .
 RUN uv pip install --system -r requirements.txt
 
 # In development we bind mount the code, so we just run the server
-CMD ["sh", "-c", "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"]
+CMD ["sh", "-c", "python manage.py migrate && daphne -b 0.0.0.0 -p 8000 rol_narrator_screen.asgi:application"]

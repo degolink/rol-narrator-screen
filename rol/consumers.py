@@ -5,11 +5,12 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 
 class CharacterConsumer(AsyncWebsocketConsumer):
     async def connect(self):
+        self.user = self.scope["user"]
+        if not self.user.is_authenticated:
+            await self.close()
+            return
+
         # We can use a general group for all character updates,
-        # or a specific group per character if needed.
-        # Let's use a global "characters" group for simplicity as per common narrator screen needs,
-        # or "character_{id}" to be specific. The plan says "synchronizing character sheet fields".
-        # We will listen to specific character IDs or a global update channel.
         self.character_id = self.scope["url_route"]["kwargs"].get("char_id", "all")
         self.room_group_name = f"character_{self.character_id}"
 
@@ -61,7 +62,6 @@ class CharacterConsumer(AsyncWebsocketConsumer):
             text_data=json.dumps({"type": "character_deleted", "id": char_id})
         )
 
-    # Broadcast chat message to WebSockets in group
     async def chat_message_broadcast(self, event):
         message = event["message"]
         clientId = event.get("clientId")
@@ -70,4 +70,29 @@ class CharacterConsumer(AsyncWebsocketConsumer):
             text_data=json.dumps(
                 {"type": "chat_message", "message": message, "clientId": clientId}
             )
+        )
+
+
+class UserConsumer(AsyncWebsocketConsumer):
+    async def connect(self):
+        self.user = self.scope["user"]
+        if not self.user.is_authenticated:
+            await self.close()
+            return
+
+        self.user_group = f"user_{self.user.id}"
+
+        # Join private group
+        await self.channel_layer.group_add(self.user_group, self.channel_name)
+
+        await self.accept()
+
+    async def disconnect(self, close_code):
+        if hasattr(self, "user_group"):
+            await self.channel_layer.group_discard(self.user_group, self.channel_name)
+
+    async def profile_update_event(self, event):
+        # Send full profile data to the WebSocket client
+        await self.send(
+            text_data=json.dumps({"type": "profile_update", "data": event["data"]})
         )

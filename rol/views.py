@@ -101,13 +101,18 @@ class VerifyMagicLinkView(APIView):
             # Delete token after use
             token.delete()
 
-            return Response(
+            response = Response(
                 {
-                    "refresh": str(refresh),
-                    "access": str(refresh.access_token),
                     "user": UserSerializer(user).data,
                 }
             )
+
+            # Set JWT cookies if enabled in settings
+            if settings.REST_AUTH.get("USE_JWT", False):
+                from dj_rest_auth.jwt_auth import set_jwt_cookies
+                set_jwt_cookies(response, refresh.access_token, refresh)
+
+            return response
         except MagicToken.DoesNotExist:
             return Response(
                 {"error": "Invalid token"}, status=status.HTTP_400_BAD_REQUEST
@@ -152,6 +157,15 @@ class ProfileViewSet(viewsets.GenericViewSet):
                     "is_dungeon_master": profile.is_dungeon_master,
                 },
             )
+            # Detailed profile Update for the user only
+            user_group = f"user_{user.id}"
+            async_to_sync(channel_layer.group_send)(
+                user_group,
+                {
+                    "type": "profile_update_event",
+                    "data": UserSerializer(user).data,
+                },
+            )
 
         serializer = self.get_serializer(user)
         return Response(serializer.data)
@@ -175,6 +189,17 @@ class ProfileViewSet(viewsets.GenericViewSet):
                 action = "assigned"
 
             character.save()
+
+            # Broadcast update to the user
+            channel_layer = get_channel_layer()
+            async_to_sync(channel_layer.group_send)(
+                f"user_{request.user.id}",
+                {
+                    "type": "profile_update_event",
+                    "data": UserSerializer(request.user).data,
+                },
+            )
+
             return Response(
                 {"message": f"Character {character.name} {action} successfully"}
             )
