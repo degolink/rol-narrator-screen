@@ -19,8 +19,8 @@ django_asgi_app = get_asgi_application()
 from channels.routing import ProtocolTypeRouter, URLRouter
 from channels.security.websocket import AllowedHostsOriginValidator
 
-from rol.middleware import JWTAuthMiddleware
 import rol.routing  # noqa: E402
+from rol.middleware import JWTAuthMiddleware
 
 application = ProtocolTypeRouter(
     {
