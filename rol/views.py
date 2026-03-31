@@ -122,6 +122,7 @@ class VerifyMagicLinkView(APIView):
 class ProfileViewSet(viewsets.GenericViewSet):
     permission_classes = [IsAuthenticated]
     serializer_class = UserSerializer
+    queryset = User.objects.none()
 
     @action(detail=False, methods=["get", "patch"])
     def me(self, request):
@@ -190,15 +191,8 @@ class ProfileViewSet(viewsets.GenericViewSet):
 
             character.save()
 
-            # Broadcast update to the user
-            channel_layer = get_channel_layer()
-            async_to_sync(channel_layer.group_send)(
-                f"user_{request.user.id}",
-                {
-                    "type": "profile_update_event",
-                    "data": UserSerializer(request.user).data,
-                },
-            )
+            # Broadcast update
+            self._broadcast_profile_update(request.user)
 
             return Response(
                 {"message": f"Character {character.name} {action} successfully"}
@@ -207,6 +201,89 @@ class ProfileViewSet(viewsets.GenericViewSet):
             return Response(
                 {"error": "Character not found"}, status=status.HTTP_404_NOT_FOUND
             )
+
+    @action(detail=False, methods=["post"])
+    def set_active_character(self, request):
+        character_id = request.data.get("character_id")
+        user = request.user
+        profile, _ = UserProfile.objects.get_or_create(user=user)
+
+        if character_id is None:
+            profile.active_character = None
+            profile.save()
+            # Broadcast update
+            self._broadcast_profile_update(user)
+            return Response({"message": "Active character cleared"})
+
+        try:
+            character = Character.objects.get(id=character_id)
+            # Check permissions:
+            # DM can select anyone visible. Player can select only their assigned ones.
+            if profile.is_dungeon_master:
+                if not character.visible:
+                    return Response(
+                        {"error": "NPC not visible"}, status=status.HTTP_403_FORBIDDEN
+                    )
+            else:
+                if character.player != user:
+                    return Response(
+                        {"error": "This character is not yours"},
+                        status=status.HTTP_403_FORBIDDEN,
+                    )
+
+            profile.active_character = character
+            profile.save()
+
+            # Broadcast update
+            self._broadcast_profile_update(user)
+
+            return Response(
+                {
+                    "message": f"Active character set to {character.name}",
+                    "active_character": CharacterSerializer(character).data,
+                }
+            )
+        except Character.DoesNotExist:
+            return Response(
+                {"error": "Character not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+
+    @action(detail=False, methods=["get"])
+    def participants(self, request):
+        users = User.objects.all().select_related("profile", "profile__active_character")
+        data = []
+        for u in users:
+            profile = getattr(u, "profile", None)
+            active_char = profile.active_character if profile else None
+
+            # Determine "display name" for whisper list
+            if profile and profile.is_dungeon_master:
+                display_name = "Dungeon Master"
+            elif active_char:
+                display_name = active_char.name
+            else:
+                display_name = u.username
+
+            data.append(
+                {
+                    "id": u.id,
+                    "username": u.username,
+                    "display_name": display_name,
+                    "is_dm": profile.is_dungeon_master if profile else False,
+                    "active_character_id": active_char.id if active_char else None,
+                }
+            )
+        return Response(data)
+
+    def _broadcast_profile_update(self, user):
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(
+            f"user_{user.id}",
+            {
+                "type": "profile_update_event",
+                "data": UserSerializer(user).data,
+            },
+        )
 
 
 class CharacterViewSet(viewsets.ModelViewSet):

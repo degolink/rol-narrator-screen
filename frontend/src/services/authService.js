@@ -36,6 +36,13 @@ export const authService = {
     });
   },
 
+  async setActiveCharacter(characterId) {
+    const response = await api.post('/profile/set_active_character/', {
+      character_id: characterId,
+    });
+    return response.data;
+  },
+
   async logout() {
     return await api.post('/auth/logout/');
   },

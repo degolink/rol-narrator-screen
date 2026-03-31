@@ -16,7 +16,7 @@ from .models import (
 class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserProfile
-        fields = ["is_dungeon_master"]
+        fields = ["is_dungeon_master", "active_character"]
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -100,15 +100,21 @@ class CharacterSerializer(serializers.ModelSerializer):
 
 class ChatMessageSerializer(serializers.ModelSerializer):
     sender_name = serializers.SerializerMethodField()
-    sender_char_id = serializers.IntegerField(
-        source="sender_character.id", read_only=True
+    sender_username = serializers.CharField(
+        source="sender_user.username", read_only=True
     )
+    is_sender_dm = serializers.BooleanField(
+        source="sender_user.profile.is_dungeon_master", read_only=True
+    )
+    sender_char_id = serializers.ReadOnlyField(source="sender_character_id")
 
     class Meta:
         model = ChatMessage
         fields = [
             "id",
             "sender_user",
+            "sender_username",
+            "is_sender_dm",
             "sender_character",
             "sender_name",
             "sender_char_id",

@@ -4,7 +4,9 @@ import {
   useEffect,
   useLayoutEffect,
   useCallback,
+  useMemo,
 } from 'react';
+import { Link } from 'react-router-dom';
 import {
   MessageCircle,
   X,
@@ -14,6 +16,7 @@ import {
   Ghost,
   Search,
   Loader2,
+  User as UserIcon,
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { api } from '@/services/apiService';
@@ -26,9 +29,48 @@ import { cn } from '@/lib/cn';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+
+const formatFriendlyDate = (dateStr) => {
+  if (!dateStr) return '';
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diffInMinutes = Math.floor((now - date) / 60000);
+
+  if (diffInMinutes < 1) return 'hace unos instantes';
+  if (diffInMinutes < 60) {
+    return `hace ${diffInMinutes} ${diffInMinutes === 1 ? 'minuto' : 'minutos'}`;
+  }
+
+  // Format: 20 Enero 2020 20:20
+  const formattedDate = date.toLocaleString('es-ES', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
+
+  const formattedTime = date.toLocaleString('es-ES', {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+
+  // Capitalize first letter of month
+  const parts = formattedDate.split(' ');
+  if (parts.length >= 2) {
+    parts[1] = parts[1].charAt(0).toUpperCase() + parts[1].slice(1);
+  }
+
+  return `${parts.join(' ')} ${formattedTime}`;
+};
 
 export function ChatWidget() {
-  const { user } = useUser();
+  const { user, activeCharacter, setActiveCharacter, isDungeonMaster } = useUser();
   const {
     messages,
     typingUsers,
@@ -48,24 +90,73 @@ export function ChatWidget() {
   const [isSearching, setIsSearching] = useState(false);
   const [recipientId, setRecipientId] = useState(null);
   const [availableUsers, setAvailableUsers] = useState([]);
+  const [selectableCharacters, setSelectableCharacters] = useState([]);
+  const [isLoadingCharacters] = useState(false);
 
   const scrollRef = useRef(null);
+  const messagesEndRef = useRef(null);
   const lastScrollHeightRef = useRef(0);
   const [shouldMaintainScroll, setShouldMaintainScroll] = useState(false);
 
+  const scrollToBottom = useCallback((behavior = 'smooth') => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior });
+    }
+  }, []);
+
+  // Scroll to bottom on new messages
+  useEffect(() => {
+    if (messages.length > 0 && !shouldMaintainScroll) {
+      // Small timeout to allow the DOM to update
+      const timer = setTimeout(() => scrollToBottom('smooth'), 100);
+      return () => clearTimeout(timer);
+    }
+  }, [messages, shouldMaintainScroll, scrollToBottom]);
+
   const fetchUsers = useCallback(async () => {
     try {
+      // 1. Fetch participants for whisper selector
+      const participantsRes = await api.get('/profile/participants/');
+      const others = participantsRes.data.filter((u) => u.id !== user.id);
+      setAvailableUsers(others);
+
+      // 2. Fetch characters for active selection
       const response = await api.get('/characters/');
-      setAvailableUsers(
-        response.data.filter((c) => c.player && user && c.player !== user.id),
-      );
+      const allChars = response.data;
+
+      let foundSelectable = [];
+      if (isDungeonMaster) {
+        // DM can select any visible character/NPC as active
+        foundSelectable = allChars.filter((c) => c.visible);
+      } else {
+        // Players can only select their own assigned characters
+        foundSelectable = allChars.filter((c) => c.player === user.id);
+      }
+      setSelectableCharacters(foundSelectable);
+
+      // Auto-select if there's only one character and none is active
+      if (!isDungeonMaster && foundSelectable.length === 1 && !activeCharacter) {
+        console.log('Auto-selecting character:', foundSelectable[0].name);
+        setActiveCharacter(foundSelectable[0].id);
+      }
     } catch (e) {
-      console.error('Failed to fetch users', e);
+      console.error('Failed to fetch data for chat', e);
     }
-  }, [user]);
+  }, [user, isDungeonMaster, activeCharacter, setActiveCharacter]);
 
   useEffect(() => {
-    if (isOpen) fetchUsers();
+    if (isOpen) {
+      fetchUsers();
+      // Auto-scroll to bottom when opened
+      setTimeout(() => {
+        const scrollContainer = scrollRef.current?.querySelector(
+          '[data-radix-scroll-area-viewport]',
+        );
+        if (scrollContainer) {
+          scrollContainer.scrollTop = scrollContainer.scrollHeight;
+        }
+      }, 100);
+    }
   }, [isOpen, fetchUsers]);
 
   // Handle Loading More - Scroll Preservation
@@ -100,6 +191,16 @@ export function ChatWidget() {
     }
   };
 
+  const sendingAsName = useMemo(() => {
+    if (isDungeonMaster) {
+      if (!activeCharacter) return 'Dungeon Master';
+      const char = selectableCharacters.find((c) => c.id == activeCharacter);
+      return char ? char.name : 'Dungeon Master';
+    }
+    const char = selectableCharacters.find((c) => c.id == activeCharacter);
+    return char ? char.name : (user?.username || 'Jugador');
+  }, [isDungeonMaster, activeCharacter, selectableCharacters, user]);
+
   const filteredMessages = messages.filter(
     (msg) =>
       msg.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -110,6 +211,7 @@ export function ChatWidget() {
     setInputValue(e.target.value);
     sendTypingStatus(e.target.value.length > 0);
   };
+
 
   if (!isOpen && !isFullScreen) {
     return (
@@ -140,18 +242,51 @@ export function ChatWidget() {
             <div className="p-2 bg-indigo-600/20 rounded-lg">
               <Ghost className="w-5 h-5 text-indigo-400" />
             </div>
-            <div>
-              <h3 className="font-bold text-gray-100 tracking-wide select-none cursor-default">
-                Chat de Sesión
-              </h3>
-              <div className="flex items-center gap-1.5">
+            <div className="min-w-0 flex-1">
+              {selectableCharacters.length > 1 || (isDungeonMaster && selectableCharacters.length > 0) ? (
+                <div className="flex flex-col">
+                  <select
+                    value={activeCharacter || ''}
+                    onChange={(e) => setActiveCharacter(e.target.value || null)}
+                    className="bg-transparent border-none p-0 font-bold text-gray-100 text-sm tracking-wide focus:ring-0 outline-none cursor-pointer hover:text-indigo-400 transition-colors w-full"
+                  >
+                    {!isDungeonMaster ? null : (
+                      <option value="" className="bg-gray-900 text-gray-100 font-bold">
+                        Dungeon Master
+                      </option>
+                    )}
+                    {selectableCharacters.map((char) => (
+                      <option key={char.id} value={char.id} className="bg-gray-900 text-gray-100 font-bold">
+                        {char.name}
+                      </option>
+                    ))}
+                  </select>
+                  {user?.username && (
+                    <span className="text-[9px] text-gray-500 font-medium leading-none">
+                      {user.username}
+                    </span>
+                  )}
+                </div>
+              ) : (
+                <>
+                  <h3 className="font-bold text-gray-100 text-sm tracking-wide select-none cursor-default truncate">
+                    {sendingAsName}
+                  </h3>
+                  {user?.username && (
+                    <span className="text-[9px] text-gray-500 font-medium leading-none block mt-0.5">
+                      {user.username}
+                    </span>
+                  )}
+                </>
+              )}
+              <div className="flex items-center gap-1.5 mt-1">
                 <span
                   className={cn(
-                    'w-2 h-2 rounded-full animate-pulse',
+                    'w-1.5 h-1.5 rounded-full animate-pulse',
                     readyState === 1 ? 'bg-green-500' : 'bg-red-500',
                   )}
                 />
-                <span className="text-[10px] text-gray-400 uppercase font-bold tracking-tighter">
+                <span className="text-[9px] text-gray-400 uppercase font-black tracking-tighter">
                   {readyState === 1 ? 'Conectado' : 'Desconectado'}
                 </span>
               </div>
@@ -240,6 +375,11 @@ export function ChatWidget() {
                 <div className="flex items-center gap-2 px-1">
                   <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wide">
                     {msg.sender_name}
+                    {msg.sender_username && (
+                      <span className="ml-1 opacity-50 font-normal lowercase">
+                        ({msg.sender_username})
+                      </span>
+                    )}
                   </span>
                   {msg.message_type === 'WHISPER' && (
                     <Badge
@@ -274,10 +414,7 @@ export function ChatWidget() {
                   <ReactMarkdown>{msg.content}</ReactMarkdown>
                 </div>
                 <span className="text-[9px] text-gray-600 px-1 italic">
-                  {new Date(msg.created_at).toLocaleTimeString('es-ES', {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
+                  {formatFriendlyDate(msg.created_at)}
                 </span>
               </div>
             ))}
@@ -288,6 +425,7 @@ export function ChatWidget() {
               <p className="text-sm font-medium">Sincronizando historial...</p>
             </div>
           )}
+          <div ref={messagesEndRef} />
         </div>
       </ScrollArea>
 
@@ -300,69 +438,161 @@ export function ChatWidget() {
         </div>
       )}
 
-      {/* Input */}
+      {/* Input or Character Selection */}
       <div className="p-4 bg-gray-800/80 border-t border-gray-700 shrink-0">
-        <form onSubmit={handleSend} className="space-y-3">
-          <div className="flex items-center justify-between px-1">
-            <div className="flex items-center space-x-2">
-              <Switch
-                id="ooc-mode"
-                checked={isOOC}
-                onCheckedChange={(val) => {
-                  setIsOOC(val);
-                  if (val) setRecipientId(null);
-                }}
-                className="scale-75 data-[state=checked]:bg-indigo-600"
-              />
-              <Label
-                htmlFor="ooc-mode"
-                className="text-[10px] text-gray-400 uppercase font-bold cursor-pointer"
-              >
-                Modo Fuera de Rol
-              </Label>
+        {!activeCharacter && !isDungeonMaster ? (
+          <div className="flex flex-col items-center gap-4 py-4 animate-in fade-in zoom-in duration-300">
+            <div className="p-3 bg-amber-500/10 rounded-full">
+              <UserIcon className="w-8 h-8 text-amber-500" />
+            </div>
+            <div className="text-center space-y-1">
+              <h4 className="text-sm font-bold text-gray-100">
+                Selecciona un personaje
+              </h4>
+              <p className="text-xs text-gray-400">
+                Debes elegir un personaje antes de poder chatear.
+              </p>
+            </div>
+            <div className="w-full max-w-[240px] space-y-2">
+              {selectableCharacters.length > 0 ? (
+                <>
+                  {selectableCharacters.map((char) => (
+                    <Button
+                      key={char.id}
+                      variant="outline"
+                      className="w-full justify-start gap-3 bg-gray-900 border-gray-700 hover:bg-gray-800 hover:border-indigo-500 transition-all group"
+                      onClick={() => setActiveCharacter(char.id)}
+                      disabled={isLoadingCharacters}
+                    >
+                      <div className="w-2 h-2 rounded-full bg-indigo-500 group-hover:animate-ping" />
+                      <span className="truncate">{char.name}</span>
+                    </Button>
+                  ))}
+                  <div className="pt-2 text-center">
+                    <Link
+                      to="/perfil"
+                      className="text-[11px] text-indigo-400 hover:text-indigo-300 underline underline-offset-4"
+                    >
+                      Ir a mi perfil
+                    </Link>
+                  </div>
+                </>
+              ) : (
+                <div className="flex flex-col items-center gap-3">
+                  <p className="text-[10px] text-center text-gray-500 italic">
+                    No tienes personajes asignados.
+                  </p>
+                  <Button
+                    asChild
+                    variant="link"
+                    className="text-xs text-indigo-400 h-auto p-0"
+                  >
+                    <Link to="/perfil">Asignar personajes en mi perfil</Link>
+                  </Button>
+                </div>
+              )}
+            </div>
+          </div>
+        ) : (
+          <form onSubmit={handleSend} className="space-y-2">
+            <div className="flex flex-wrap items-center justify-end gap-2 px-1">
+              {/* Character Selector for DM (Compact) - keep only if needed, but redundant now? */}
+              {isDungeonMaster && (
+                <div className="flex items-center gap-2">
+                  <select
+                    value={activeCharacter || ''}
+                    onChange={(e) => setActiveCharacter(e.target.value || null)}
+                    className="bg-gray-950 border border-gray-700/50 rounded text-[10px] h-5 px-1 text-gray-400 focus:ring-1 focus:ring-indigo-500 outline-none w-28 transition-colors hover:border-gray-500"
+                  >
+                    <option value="">DM</option>
+                    {selectableCharacters.map((char) => (
+                      <option key={char.id} value={char.id}>
+                        {char.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
             </div>
 
-            {!isOOC && (
-              <div className="flex items-center gap-2">
-                <Label className="text-[10px] text-gray-500 uppercase font-bold">
-                  Susurrar a:
-                </Label>
-                <select
-                  value={recipientId || ''}
-                  onChange={(e) => setRecipientId(e.target.value || null)}
-                  className="bg-gray-950 border border-gray-700 rounded text-[10px] h-6 px-1 text-gray-300 focus:ring-1 focus:ring-indigo-500 outline-none"
+            <div className="flex items-center justify-between px-1">
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="ooc-mode"
+                  checked={isOOC}
+                  onCheckedChange={(val) => {
+                    setIsOOC(val);
+                    if (val) setRecipientId(null);
+                  }}
+                  className="scale-75 data-[state=checked]:bg-indigo-600"
+                />
+                <Label
+                  htmlFor="ooc-mode"
+                  className="text-[10px] text-gray-400 uppercase font-bold cursor-pointer"
                 >
-                  <option value="">(Todos)</option>
-                  {availableUsers.map((u) => (
-                    <option key={u.id} value={u.player}>
-                      {u.name}
-                    </option>
-                  ))}
-                </select>
+                  Modo Fuera de Rol
+                </Label>
               </div>
-            )}
-          </div>
 
-          <div className="flex gap-2">
-            <Input
-              value={inputValue}
-              onChange={handleInputChange}
-              placeholder={
-                isOOC
-                  ? 'Mensaje fuera de personaje...'
-                  : 'Escribe algo épico...'
-              }
-              className="flex-1 bg-gray-950 border-gray-700 text-white placeholder:text-gray-500 focus-visible:ring-indigo-500 h-11 rounded-xl"
-            />
-            <Button
-              type="submit"
-              disabled={!inputValue.trim()}
-              className="bg-indigo-600 hover:bg-indigo-500 h-11 w-11 p-0 rounded-xl"
-            >
-              <Send className="h-5 w-5" />
-            </Button>
-          </div>
-        </form>
+              {!isOOC && (
+                <div className="flex items-center gap-2">
+                  <Label className="text-[10px] text-gray-500 uppercase font-bold shrink-0">
+                    Susurrar a:
+                  </Label>
+                  <Select
+                    value={recipientId?.toString() || 'none'}
+                    onValueChange={(val) =>
+                      setRecipientId(val === 'none' ? null : parseInt(val))
+                    }
+                  >
+                    <SelectTrigger className="h-6 w-[120px] bg-gray-950 border-gray-700/50 text-[10px] px-2 text-gray-300 focus:ring-1 focus:ring-indigo-500">
+                      <SelectValue placeholder="(Todos)" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-gray-900 border-gray-700 text-gray-100 min-w-[200px]">
+                      <SelectItem
+                        value="none"
+                        className="text-[11px] data-[highlighted]:bg-indigo-600 data-[highlighted]:text-white focus:bg-indigo-600 focus:text-white cursor-pointer"
+                      >
+                        (Todos)
+                      </SelectItem>
+                      {availableUsers.map((u) => (
+                        <SelectItem
+                          key={u.id}
+                          value={u.id.toString()}
+                          className="text-[11px] data-[highlighted]:bg-indigo-600 data-[highlighted]:text-white focus:bg-indigo-600 focus:text-white cursor-pointer"
+                        >
+                          {u.display_name} ({u.username})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            </div>
+
+            <div className="flex gap-2 relative group">
+              <Input
+                id="chat-input"
+                value={inputValue}
+                onChange={handleInputChange}
+                autoComplete="off"
+                placeholder={
+                  isOOC
+                    ? 'Mensaje fuera de personaje...'
+                    : 'Escribe algo épico...'
+                }
+                className="flex-1 bg-gray-950 border-gray-700/50 text-white placeholder:text-gray-600 focus-visible:ring-indigo-500 h-10 rounded-xl pr-12 transition-all hover:border-gray-600"
+              />
+              <Button
+                type="submit"
+                disabled={!inputValue.trim()}
+                className="absolute right-1 top-1 bottom-1 bg-indigo-600 hover:bg-indigo-500 h-8 w-8 p-0 rounded-lg transition-all active:scale-95"
+              >
+                <Send className="h-4 w-4" />
+              </Button>
+            </div>
+          </form>
+        )}
       </div>
     </div>
   );

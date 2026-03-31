@@ -153,6 +153,13 @@ class ChatMessage(models.Model):
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
     is_dungeon_master = models.BooleanField(default=False)
+    active_character = models.ForeignKey(
+        Character,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="active_profiles",
+    )
 
     def __str__(self):
         return f"Profile of {self.user.username}"

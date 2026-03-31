@@ -5,7 +5,7 @@ import { api } from '@/services/apiService';
 import { useUser } from '@/context/UserContext';
 
 export function useChat() {
-  const { character } = useUser();
+  const { activeCharacter } = useUser();
   const [messages, setMessages] = useState([]);
   const [typingUsers, setTypingUsers] = useState({});
   const [nextCursor, setNextCursor] = useState(null);
@@ -75,6 +75,7 @@ export function useChat() {
                 sender_name: is_dungeon_master
                   ? 'Dungeon Master'
                   : username || msg.sender_name,
+                sender_username: username,
               };
             }
             return msg;
@@ -89,16 +90,17 @@ export function useChat() {
     sendJsonMessage({
       type: 'chat_message',
       content,
-      character_id: character?.id,
+      character_id: activeCharacter, // activeCharacter is the ID in the backend response
       recipient_id,
       ooc,
     });
   };
 
   const sendTypingStatus = (is_typing) => {
+    // We let the backend determine the name from profile.active_character
+    // but we can pass it if we have it.
     sendJsonMessage({
       type: 'typing_indicator',
-      character_name: character?.name || 'Dungeon Master',
       is_typing,
     });
   };

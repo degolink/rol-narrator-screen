@@ -56,3 +56,16 @@ class TestChat:
         whisper_contents = [m["content"] for m in response.data["results"]]
         assert "Top secret" in whisper_contents
         assert "Other secret" in whisper_contents # sent by them
+
+    def test_chat_message_identity_serialization(self, auth_client, user, character):
+        # Create message with explicit character
+        ChatMessage.objects.create(sender_user=user, sender_character=character, content="Identity test")
+
+        url = reverse("chat-list")
+        response = auth_client.get(url)
+
+        assert response.status_code == 200
+        msg_data = response.data["results"][0]
+        assert msg_data["sender_char_id"] == character.id
+        assert msg_data["sender_name"] == character.name
+

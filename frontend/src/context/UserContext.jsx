@@ -17,6 +17,7 @@ export function UserContextProvider({ children }) {
   const [user, setUser] = useState();
   const [loading, setLoading] = useState(true);
   const isDungeonMaster = user?.profile?.is_dungeon_master;
+  const activeCharacter = user?.profile?.active_character;
 
   const socketUrl = useMemo(() => {
     return user ? `${WS_BASE_URL}/user/` : null;
@@ -63,6 +64,11 @@ export function UserContextProvider({ children }) {
     return await authService.assignCharacter(characterId);
   }, []);
 
+  const setActiveCharacter = useCallback(async (characterId) => {
+    const data = await authService.setActiveCharacter(characterId);
+    return data;
+  }, []);
+
   const loginWithMagicLink = useCallback(async (token) => {
     try {
       const user = await authService.verifyMagicLink(token);
@@ -103,6 +109,7 @@ export function UserContextProvider({ children }) {
         user,
         loading,
         isDungeonMaster,
+        activeCharacter,
         setUser,
         logout,
         updateUser,
@@ -110,6 +117,7 @@ export function UserContextProvider({ children }) {
         requestMagicLink,
         loginWithMagicLink,
         assignCharacterToUser,
+        setActiveCharacter,
       }}
     >
       {children}

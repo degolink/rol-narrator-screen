@@ -4,7 +4,7 @@ from asgiref.sync import sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 from django.contrib.auth.models import User
 
-from .models import Character, ChatMessage
+from .models import Character, ChatMessage, UserProfile
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
@@ -46,28 +46,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
             elif recipient_id:
                 message_category = "WHISPER"
 
-            # Save to DB
-            message = await self.save_message(
+            # Save to DB and get broadcast data
+            broadcast_data = await self.process_chat_message(
                 self.user, char_id, recipient_id, content, message_category
             )
-
-            # Prepare broadcast data
-            broadcast_data = {
-                "type": "chat_message_event",
-                "message": {
-                    "id": message.id,
-                    "content": message.content,
-                    "message_type": message.message_type,
-                    "sender_name": message.sender_character.name
-                    if message.sender_character
-                    else (self.user.username or "Jugador"),
-                    "sender_user_id": message.sender_user.id,
-                    "recipient_user_id": message.recipient_user.id
-                    if message.recipient_user
-                    else None,
-                    "created_at": message.created_at.isoformat(),
-                },
-            }
 
             if message_category == "WHISPER" and recipient_id:
                 # Send to sender and recipient only
@@ -80,12 +62,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 await self.channel_layer.group_send(self.global_group, broadcast_data)
 
         elif msg_type == "typing_indicator":
-            # Use character name or username, fallback to "Dungeon Master" only if no other option
-            char_name = data.get("character_name")
-            if not char_name:
-                char_name = self.user.username or "Dungeon Master"
-
             is_typing = data.get("is_typing", False)
+            # Use sync helper to get name
+            char_name = await self.get_typing_name(self.user)
 
             await self.channel_layer.group_send(
                 self.global_group,
@@ -110,19 +89,58 @@ class ChatConsumer(AsyncWebsocketConsumer):
             await self.send(text_data=json.dumps(event))
 
     @sync_to_async
-    def save_message(self, user, char_id, recipient_id, content, category):
+    def process_chat_message(self, user, char_id, recipient_id, content, category):
         character = None
+        profile = getattr(user, 'profile', None)
+
+        # Priority: char_id from message > active_character from profile
         if char_id:
-            character = Character.objects.filter(id=char_id, player=user).first()
+            if profile and profile.is_dungeon_master:
+                character = Character.objects.filter(id=char_id, visible=True).first()
+            else:
+                character = Character.objects.filter(id=char_id, player=user).first()
+
+        if not character and profile and profile.active_character:
+             character = profile.active_character
 
         recipient = None
         if recipient_id:
             recipient = User.objects.filter(id=recipient_id).first()
 
-        return ChatMessage.objects.create(
+        message = ChatMessage.objects.create(
             sender_user=user,
             sender_character=character,
             recipient_user=recipient,
             content=content,
             message_type=category,
         )
+
+        # Prepare name
+        sender_name = character.name if character else (user.username or "Jugador")
+        is_dm = profile.is_dungeon_master if profile else False
+        if not character and is_dm:
+            sender_name = "Dungeon Master"
+
+        return {
+            "type": "chat_message_event",
+            "message": {
+                "id": message.id,
+                "content": message.content,
+                "message_type": message.message_type,
+                "sender_name": sender_name,
+                "sender_username": user.username,
+                "is_sender_dm": is_dm,
+                "sender_user_id": user.id,
+                "recipient_user_id": recipient_id,
+                "created_at": message.created_at.isoformat(),
+            },
+        }
+
+    @sync_to_async
+    def get_typing_name(self, user):
+        profile = getattr(user, "profile", None)
+        if profile and profile.active_character:
+            return profile.active_character.name
+        elif profile and profile.is_dungeon_master:
+            return "Dungeon Master"
+        return user.username or "Jugador"

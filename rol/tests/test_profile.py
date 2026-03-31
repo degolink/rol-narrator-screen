@@ -63,3 +63,51 @@ class TestProfile:
         url = reverse("profile-assign-character")
         response = auth_client.post(url, {"character_id": 9999})
         assert response.status_code == 404
+
+    def test_set_active_character_success(self, auth_client, user, character):
+        url = reverse("profile-set-active-character")
+        response = auth_client.post(url, {"character_id": character.id})
+
+        assert response.status_code == 200
+        user.profile.refresh_from_db()
+        assert user.profile.active_character == character
+
+    def test_set_active_character_dm_npc(self, dm_client, dm_user, other_character):
+        # NPCs are characters not assigned to anyone.
+        # Make it visible so DM can pick it.
+        other_character.visible = True
+        other_character.save()
+
+        url = reverse("profile-set-active-character")
+        response = dm_client.post(url, {"character_id": other_character.id})
+
+        assert response.status_code == 200
+        dm_user.profile.refresh_from_db()
+        assert dm_user.profile.active_character == other_character
+
+    def test_set_active_character_forbidden(self, auth_client, user, other_character):
+        # Player cannot pick a character not assigned to them
+        url = reverse("profile-set-active-character")
+        response = auth_client.post(url, {"character_id": other_character.id})
+
+        assert response.status_code == 403
+        user.profile.refresh_from_db()
+        assert user.profile.active_character is None
+
+    def test_participants_action(self, auth_client, user, dm_user, character):
+        # Set active character for user
+        user.profile.active_character = character
+        user.profile.save()
+
+        url = reverse("profile-participants")
+        response = auth_client.get(url)
+
+        assert response.status_code == 200
+        # Results should include DM and the user
+        usernames = [p["username"] for p in response.data]
+        assert user.username in usernames
+        assert dm_user.username in usernames
+
+        # Check display name logic for user with active character
+        user_data = next(p for p in response.data if p["username"] == user.username)
+        assert user_data["display_name"] == character.name
