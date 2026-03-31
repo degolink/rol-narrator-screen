@@ -1,0 +1,11 @@
+#!/bin/bash
+
+# Ensure backend container is running, otherwise we can't run tests
+if ! docker compose ps backend | grep -q "Up"; then
+  echo "❌ Error: Backend container (rol_backend) is not running."
+  echo "💡 Start the environment with ./start.sh --dev before pushing."
+  exit 1
+fi
+
+echo "🧪 Running backend integration tests..."
+docker compose exec backend pytest

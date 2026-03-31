@@ -75,3 +75,15 @@ This project uses a passwordless login system:
 ## Usage
 1.  Open your browser at `https://pantallanarrador.local` (or your custom domain).
 2.  Log in with your Magic Link and manage your D&D sessions in real-time.
+
+---
+### 🧪 Testing
+
+The project includes a comprehensive suite of integration tests for the backend API and WebSockets.
+
+**To run all tests:**
+```bash
+docker compose exec backend pytest
+```
+
+**Note:** The tests are also automatically executed before every `git push` via a Husky hook to ensure stability.

@@ -82,3 +82,15 @@ To ensure your code follows the style guidelines, run these commands inside the 
   docker compose exec backend ruff format .
   ```
 
+## 🧪 Testing Integrity
+This project maintains a high standard of integration testing for REST endpoints and WebSockets located in `rol/tests/`.
+
+### Guidelines for AI Agents:
+1. **Always Update Tests**: When modifying existing endpoints or creating new ones, you MUST update or create corresponding integration tests in `rol/tests/`.
+2. **Run Tests Frequently**: Before finalizing any backend change, run the full test suite to ensure no regressions:
+   ```bash
+   docker compose exec backend pytest
+   ```
+3. **Use Fixtures**: Leverage and expand the existing fixtures in `rol/tests/conftest.py` for a consistent testing environment.
+4. **Mocked Auth**: For WebSocket tests, use the `UserInjectionMiddleware` pattern found in `rol/tests/test_websocket.py` to handle authenticated connections.
+
