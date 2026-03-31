@@ -9,7 +9,7 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "preview": "vite preview",
-    "prepare": "cd .. && husky frontend/.husky"
+    "prepare": "cd .. && husky .husky"
   },
   "lint-staged": {
     "frontend/src/**/*.{js,jsx}": [

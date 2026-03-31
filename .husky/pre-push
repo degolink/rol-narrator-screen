@@ -8,4 +8,4 @@ if ! docker compose ps backend | grep -q "Up"; then
 fi
 
 echo "🧪 Running backend integration tests..."
-docker compose exec backend pytest
+docker compose exec -T backend pytest
