@@ -48,6 +48,8 @@ services:
     ports:
       - "80:80"
       - "443:443"
+    environment:
+      FRONTEND_DOMAIN: ${FRONTEND_DOMAIN}
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile
       - caddy_data:/data

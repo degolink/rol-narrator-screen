@@ -12,7 +12,7 @@ fi
 # Check if FRONTEND_DOMAIN is defined
 if [ -z "$FRONTEND_DOMAIN" ]; then
     echo "❌ Error: FRONTEND_DOMAIN is not defined in your environment or .env file."
-    echo "💡 Set it to your desired domain, e.g., FRONTEND_DOMAIN=pantallanarrador.local"
+    echo "💡 Set it to your desired domain, e.g., FRONTEND_DOMAIN=rol.local"
     exit 1
 fi
 echo "🌐 Domain: $FRONTEND_DOMAIN"

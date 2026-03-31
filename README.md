@@ -7,6 +7,7 @@ The application is built using a modern **Django + Django REST Framework** backe
 ## Requirements
 
 Before running the project, ensure you have the following installed:
+
 - [Docker](https://www.docker.com/) and Docker Compose
 
 **Note:** Recommended [Docker Desktop](https://docs.docker.com/get-started/get-docker/)
@@ -27,33 +28,37 @@ cp env.sample .env
 
 #### 2. Start the Project (Automated)
 
-To simplify access and configuration, use the provided start script. This script will detect your local IP and automatically activate the alias `pantallanarrador.local` while it's running.
+To simplify access and configuration, use the provided start script. This script will detect your local IP and automatically activate the alias `rol.local` while it's running.
 
 **For normal use:**
+
 ```bash
 ./start.sh
 ```
 
 **For development (rebuild containers):**
+
 ```bash
 ./start.sh --dev
 ```
 
 > [!TIP]
-> While the script is running, you can access it from any device on your Wi-Fi at `https://pantallanarrador.local`. When you stop the script (Ctrl+C), the network and Docker services will stop.
+> While the script is running, you can access it from any device on your Wi-Fi at `https://rol.local`. When you stop the script (Ctrl+C), the network and Docker services will stop.
 
 ---
+
 You can use a custom domain by setting the `FRONTEND_DOMAIN` environment variable:
 
 1.  Open your `.env` file.
 2.  Set `FRONTEND_DOMAIN` to your desired domain (e.g., `my-dnd-screen.com`).
 3.  **Caddy** will automatically use this URL to provision SSL certificates and route traffic.
-4.  If you are using a local domain (like the default `pantallanarrador.local`), ensure it resolves correctly to your machine's IP.
+4.  If you are using a local domain (like the default `rol.local`), ensure it resolves correctly to your machine's IP.
 
 > [!IMPORTANT]
 > The `FRONTEND_DOMAIN` is used by both the backend (to handle CORS and redirects) and Caddy (to configure the gateway).
 
 ---
+
 ### 🔐 Authentication (Magic Links)
 
 This project uses a passwordless login system:
@@ -61,27 +66,32 @@ This project uses a passwordless login system:
 1.  Enter your email on the home page.
 2.  If it's your first time, you'll be asked for a username.
 3.  The system will generate an access link (Magic Link).
-4.  **In development:** You can access the Magic Link at [https://pantallanarrador.local/email](https://pantallanarrador.local/email).
+4.  **In development:** You can access the Magic Link at [https://rol.local/email](https://rol.local/email).
 5.  Click the link to log in automatically.
 
 ---
+
 ### Ports and Services:
-- **Gateway (Caddy)**: `https://pantallanarrador.local` (Port 443 by default, or your custom `FRONTEND_URL`).
-- **Local Email Service (Mailpit)**: [https://pantallanarrador.local/email](https://pantallanarrador.local/email) (Access Magic Links here during development).
+
+- **Gateway (Caddy)**: `https://rol.local` (Port 443 by default, or your custom `FRONTEND_URL`).
+- **Local Email Service (Mailpit)**: [https://rol.local/email](https://rol.local/email) (Access Magic Links here during development).
 - HTTP traffic (80) is automatically redirected to HTTPS.
 
 ---
 
 ## Usage
-1.  Open your browser at `https://pantallanarrador.local` (or your custom domain).
+
+1.  Open your browser at `https://rol.local` (or your custom domain).
 2.  Log in with your Magic Link and manage your D&D sessions in real-time.
 
 ---
+
 ### 🧪 Testing
 
 The project includes a comprehensive suite of integration tests for the backend API and WebSockets.
 
 **To run all tests:**
+
 ```bash
 docker compose exec backend pytest
 ```
