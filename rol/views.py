@@ -110,6 +110,7 @@ class VerifyMagicLinkView(APIView):
             # Set JWT cookies if enabled in settings
             if settings.REST_AUTH.get("USE_JWT", False):
                 from dj_rest_auth.jwt_auth import set_jwt_cookies
+
                 set_jwt_cookies(response, refresh.access_token, refresh)
 
             return response
@@ -173,6 +174,7 @@ class ProfileViewSet(viewsets.GenericViewSet):
 
     @action(detail=False, methods=["post"])
     def assign_character(self, request):
+        """Assigns or unassigns a character to the current user."""
         character_id = request.data.get("character_id")
         if not character_id:
             return Response(
@@ -182,25 +184,127 @@ class ProfileViewSet(viewsets.GenericViewSet):
 
         try:
             character = Character.objects.get(id=character_id)
-            if character.player == request.user:
+            user = request.user
+            previous_player = character.player
+
+            if character.player == user:
                 character.player = None
-                action = "unassigned"
+                assign_action = "unassigned"
             else:
-                character.player = request.user
-                action = "assigned"
+                character.player = user
+                assign_action = "assigned"
 
             character.save()
 
-            # Broadcast update
-            self._broadcast_profile_update(request.user)
+            # 1. Handle exclusivity: If stolen, clear previous owner's active status
+            if previous_player and previous_player != user:
+                self._handle_stolen_character(previous_player, character)
+
+            # 2. Handle auto-selection and cleanup for the current user
+            self._sync_user_active_character(user, character, assign_action)
+
+            # 3. Create and broadcast announcement message in chat
+            self._announce_character_change(
+                user, character, previous_player, assign_action
+            )
+
+            # 4. Trigger global refresh of character lists
+            channel_layer = get_channel_layer()
+            async_to_sync(channel_layer.group_send)(
+                "global_chat", {"type": "character_list_update"}
+            )
+
+            # Broadcast update to current user (Profile sync)
+            self._broadcast_profile_update(user, force_refresh=True)
 
             return Response(
-                {"message": f"Character {character.name} {action} successfully"}
+                {"message": f"Character {character.name} {assign_action} successfully"}
             )
         except Character.DoesNotExist:
             return Response(
                 {"error": "Character not found"}, status=status.HTTP_404_NOT_FOUND
             )
+
+    def _handle_stolen_character(self, previous_player, character):
+        """Clears the active character from a player if it was stolen from them."""
+        prev_profile, _ = UserProfile.objects.get_or_create(user=previous_player)
+        if prev_profile.active_character == character:
+            prev_profile.active_character = None
+            prev_profile.save()
+            self._broadcast_profile_update(
+                previous_player,
+                notification=f"El personaje {character.name} ha sido reclamado por otro jugador.",
+                force_refresh=True,
+            )
+        else:
+            # Still need to refresh their list as they lost access
+            self._broadcast_profile_update(previous_player, force_refresh=True)
+
+    def _sync_user_active_character(self, user, character, action):
+        """Synchronizes the active character for the current user after assignment change."""
+        profile, _ = UserProfile.objects.get_or_create(user=user)
+
+        # If the character being unassigned was the active one, clear it
+        if action == "unassigned" and profile.active_character == character:
+            profile.active_character = None
+            profile.save()
+
+        # Ensure current active character (if any) is still valid
+        if profile.active_character:
+            is_invalid = False
+            if profile.is_dungeon_master:
+                if not profile.active_character.visible:
+                    is_invalid = True
+            elif profile.active_character.player != user:
+                is_invalid = True
+
+            if is_invalid:
+                profile.active_character = None
+                profile.save()
+
+        # Auto-selection: If user has exactly one character now, select it
+        my_chars = Character.objects.filter(player=user, is_active=True)
+        if (
+            action == "assigned"
+            and my_chars.count() == 1
+            and not profile.active_character
+        ):
+            profile.active_character = my_chars.first()
+            profile.save()
+
+    def _announce_character_change(self, user, character, previous_player, action):
+        """Creates and broadcasts a system message about the character assignment change."""
+        if action == "assigned":
+            if previous_player and previous_player != user:
+                announcement = (
+                    f"**{user.username}** ha **ARREBATADO** el personaje "
+                    f"**{character.name}** a **{previous_player.username}**."
+                )
+            else:
+                announcement = (
+                    f"**{user.username}** ha **RECLAMADO** el personaje "
+                    f"**{character.name}**."
+                )
+        else:
+            announcement = (
+                f"**{user.username}** ha **LIBERADO** el personaje "
+                f"**{character.name}**."
+            )
+
+        system_msg = ChatMessage.objects.create(
+            sender_user=user,
+            content=announcement,
+            message_type="OOC",
+        )
+
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(
+            "global_chat",
+            {
+                "type": "chat_message_event",
+                "message": ChatMessageSerializer(system_msg).data,
+            },
+        )
 
     @action(detail=False, methods=["post"])
     def set_active_character(self, request):
@@ -250,7 +354,9 @@ class ProfileViewSet(viewsets.GenericViewSet):
 
     @action(detail=False, methods=["get"])
     def participants(self, request):
-        users = User.objects.all().select_related("profile", "profile__active_character")
+        users = User.objects.all().select_related(
+            "profile", "profile__active_character"
+        )
         data = []
         for u in users:
             profile = getattr(u, "profile", None)
@@ -275,14 +381,21 @@ class ProfileViewSet(viewsets.GenericViewSet):
             )
         return Response(data)
 
-    def _broadcast_profile_update(self, user):
+    def _broadcast_profile_update(self, user, notification=None, force_refresh=False):
         channel_layer = get_channel_layer()
+        data = UserSerializer(user).data
+        event = {
+            "type": "profile_update_event",
+            "data": data,
+        }
+        if notification:
+            event["notification"] = notification
+        if force_refresh:
+            event["force_refresh"] = force_refresh
+
         async_to_sync(channel_layer.group_send)(
             f"user_{user.id}",
-            {
-                "type": "profile_update_event",
-                "data": UserSerializer(user).data,
-            },
+            event,
         )
 
 

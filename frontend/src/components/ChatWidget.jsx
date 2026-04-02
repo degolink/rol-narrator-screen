@@ -70,7 +70,8 @@ const formatFriendlyDate = (dateStr) => {
 };
 
 export function ChatWidget() {
-  const { user, activeCharacter, setActiveCharacter, isDungeonMaster } = useUser();
+  const { user, activeCharacter, setActiveCharacter, isDungeonMaster } =
+    useUser();
   const {
     messages,
     typingUsers,
@@ -135,7 +136,11 @@ export function ChatWidget() {
       setSelectableCharacters(foundSelectable);
 
       // Auto-select if there's only one character and none is active
-      if (!isDungeonMaster && foundSelectable.length === 1 && !activeCharacter) {
+      if (
+        !isDungeonMaster &&
+        foundSelectable.length === 1 &&
+        !activeCharacter
+      ) {
         console.log('Auto-selecting character:', foundSelectable[0].name);
         setActiveCharacter(foundSelectable[0].id);
       }
@@ -198,7 +203,7 @@ export function ChatWidget() {
       return char ? char.name : 'Dungeon Master';
     }
     const char = selectableCharacters.find((c) => c.id == activeCharacter);
-    return char ? char.name : (user?.username || 'Jugador');
+    return char ? char.name : user?.username || 'Jugador';
   }, [isDungeonMaster, activeCharacter, selectableCharacters, user]);
 
   const filteredMessages = messages.filter(
@@ -212,6 +217,16 @@ export function ChatWidget() {
     sendTypingStatus(e.target.value.length > 0);
   };
 
+  // Listen for external refresh requests (e.g. from UserContext WS)
+  useEffect(() => {
+    const handleRefresh = () => {
+      if (isOpen) {
+        fetchUsers();
+      }
+    };
+    window.addEventListener('chat:refresh_data', handleRefresh);
+    return () => window.removeEventListener('chat:refresh_data', handleRefresh);
+  }, [isOpen, fetchUsers]);
 
   if (!isOpen && !isFullScreen) {
     return (
@@ -243,7 +258,8 @@ export function ChatWidget() {
               <Ghost className="w-5 h-5 text-indigo-400" />
             </div>
             <div className="min-w-0 flex-1">
-              {selectableCharacters.length > 1 || (isDungeonMaster && selectableCharacters.length > 0) ? (
+              {selectableCharacters.length > 1 ||
+              (isDungeonMaster && selectableCharacters.length > 0) ? (
                 <div className="flex flex-col">
                   <select
                     value={activeCharacter || ''}
@@ -251,12 +267,19 @@ export function ChatWidget() {
                     className="bg-transparent border-none p-0 font-bold text-gray-100 text-sm tracking-wide focus:ring-0 outline-none cursor-pointer hover:text-indigo-400 transition-colors w-full"
                   >
                     {!isDungeonMaster ? null : (
-                      <option value="" className="bg-gray-900 text-gray-100 font-bold">
+                      <option
+                        value=""
+                        className="bg-gray-900 text-gray-100 font-bold"
+                      >
                         Dungeon Master
                       </option>
                     )}
                     {selectableCharacters.map((char) => (
-                      <option key={char.id} value={char.id} className="bg-gray-900 text-gray-100 font-bold">
+                      <option
+                        key={char.id}
+                        value={char.id}
+                        className="bg-gray-900 text-gray-100 font-bold"
+                      >
                         {char.name}
                       </option>
                     ))}

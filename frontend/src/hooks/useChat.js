@@ -81,6 +81,8 @@ export function useChat() {
             return msg;
           }),
         );
+      } else if (lastJsonMessage.type === 'character_list_update') {
+        window.dispatchEvent(new CustomEvent('chat:refresh_data'));
       }
     }
   }, [lastJsonMessage]);

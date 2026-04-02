@@ -51,6 +51,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 self.user, char_id, recipient_id, content, message_category
             )
 
+            if not broadcast_data:
+                # Ignore invalid messages from players without characters
+                return
+
             if message_category == "WHISPER" and recipient_id:
                 # Send to sender and recipient only
                 await self.channel_layer.group_send(
@@ -88,20 +92,20 @@ class ChatConsumer(AsyncWebsocketConsumer):
         if event["user_id"] != self.user.id:
             await self.send(text_data=json.dumps(event))
 
+    async def character_list_update(self, event):
+        # Broadcast global character status changes
+        await self.send(text_data=json.dumps(event))
+
     @sync_to_async
     def process_chat_message(self, user, char_id, recipient_id, content, category):
-        character = None
-        profile = getattr(user, 'profile', None)
+        """Processes an incoming chat message, validates the sender, and prepares broadcast data."""
+        profile = getattr(user, "profile", None)
+        character = self._get_validated_character(user, profile, char_id)
 
-        # Priority: char_id from message > active_character from profile
-        if char_id:
-            if profile and profile.is_dungeon_master:
-                character = Character.objects.filter(id=char_id, visible=True).first()
-            else:
-                character = Character.objects.filter(id=char_id, player=user).first()
-
-        if not character and profile and profile.active_character:
-             character = profile.active_character
+        # Strict Constraint: Non-DMs MUST have an active character to send messages
+        is_dm = profile.is_dungeon_master if profile else False
+        if not character and not is_dm:
+            return None
 
         recipient = None
         if recipient_id:
@@ -115,11 +119,50 @@ class ChatConsumer(AsyncWebsocketConsumer):
             message_type=category,
         )
 
-        # Prepare name
-        sender_name = character.name if character else (user.username or "Jugador")
+        return self._prepare_chat_broadcast(
+            user, profile, character, message, recipient_id
+        )
+
+    def _get_validated_character(self, user, profile, char_id):
+        """Determines and validates the character the user is sending as."""
+        character = None
+
+        # Priority: char_id from message > active_character from profile
+        if char_id:
+            if profile and profile.is_dungeon_master:
+                character = Character.objects.filter(id=char_id, visible=True).first()
+            else:
+                character = Character.objects.filter(id=char_id, player=user).first()
+
+        if not character and profile and profile.active_character:
+            character = profile.active_character
+
+        # Verify ownership: Only DM can send as any visible character.
+        # Players must OWN the character to send as it.
+        if character:
+            is_valid = False
+            if profile and profile.is_dungeon_master:
+                if character.visible:
+                    is_valid = True
+            else:
+                if character.player == user:
+                    is_valid = True
+
+            if not is_valid:
+                character = None
+
+        return character
+
+    def _prepare_chat_broadcast(self, user, profile, character, message, recipient_id):
+        """Prepares the data payload to be broadcast to other clients."""
+        # Determine sender name
         is_dm = profile.is_dungeon_master if profile else False
-        if not character and is_dm:
+        if character:
+            sender_name = character.name
+        elif is_dm:
             sender_name = "Dungeon Master"
+        else:
+            sender_name = user.username or "Jugador"
 
         return {
             "type": "chat_message_event",

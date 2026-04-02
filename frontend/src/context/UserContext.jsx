@@ -8,6 +8,7 @@ import {
 } from 'react';
 import useWebSocket from 'react-use-websocket';
 import { dequal } from 'dequal';
+import { toast } from 'sonner';
 import { WS_BASE_URL } from '../config';
 import { authService } from '../services/authService';
 
@@ -38,6 +39,14 @@ export function UserContextProvider({ children }) {
           lastJsonMessage.data.username,
         );
         setUser(lastJsonMessage.data);
+      }
+
+      if (lastJsonMessage.notification) {
+        toast.info(lastJsonMessage.notification);
+      }
+
+      if (lastJsonMessage.force_refresh) {
+        window.dispatchEvent(new CustomEvent('chat:refresh_data'));
       }
     }
   }, [lastJsonMessage, user]);
