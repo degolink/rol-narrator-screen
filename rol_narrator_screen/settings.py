@@ -228,6 +228,13 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 
+# Media files (Uploads, Recordings, etc.)
+MEDIA_URL = "media/"
+MEDIA_ROOT = BASE_DIR / "media"
+
+# Audio recording limits
+AUDIO_MAX_DURATION_SECONDS = 6 * 60 * 60  # 6 hours
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 

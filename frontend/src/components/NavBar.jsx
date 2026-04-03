@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { NavLink, Link, useMatch } from 'react-router-dom';
-import { BookOpen, Users, LogOut, User as UserIcon } from 'lucide-react';
+import { BookOpen, Users, LogOut, User as UserIcon, Mic } from 'lucide-react';
 import { useUser } from '@/context/UserContext';
 import { Button } from './ui/button';
 
@@ -24,6 +24,7 @@ export function NavBar() {
         icon: Users,
         extraActiveState: !!isCharacterDetail,
       },
+      { path: '/grabadora', label: 'Grabadora', icon: Mic },
       { path: '/perfil', label: 'Perfil', icon: UserIcon },
     ];
   }, [user, isLogin, isVerify, isDM, isCharacterDetail]);
