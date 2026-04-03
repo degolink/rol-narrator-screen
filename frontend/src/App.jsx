@@ -5,7 +5,7 @@ import { CharactersPage } from './pages/CharactersPage/CharactersPage';
 import { LoginPage } from './pages/LoginPage';
 import { VerifyPage } from './pages/VerifyPage';
 import { ProfilePage } from './pages/ProfilePage';
-import { RecorderPage } from './pages/RecorderPage/RecorderPage';
+import { RecorderPage } from './pages/RecorderPage';
 import { HomePage } from './pages/HomePage';
 import { NavBar } from './components/NavBar';
 import { Toaster } from './components/ui/sonner';
