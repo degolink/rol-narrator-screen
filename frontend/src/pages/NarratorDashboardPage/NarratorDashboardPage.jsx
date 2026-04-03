@@ -8,7 +8,7 @@ import { useCharacters } from '../../hooks/characters/useCharacters';
 import { NarratorCharacterCard } from './NarratorCharacterCard/NarratorCharacterCard';
 import { DeleteCharacterDialog } from './NarratorCharacterCard/DeleteCharacterDialog';
 
-export function NarratorDashboard() {
+export function NarratorDashboardPage() {
   // drawerMode: null | 'create' | 'edit'
   const [drawerMode, setDrawerMode] = useState(null);
   const [editingCharacter, setEditingCharacter] = useState(null);
