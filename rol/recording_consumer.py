@@ -60,7 +60,7 @@ class RecordingConsumer(AsyncWebsocketConsumer):
         # Close any previous session that wasn't stopped cleanly
         self._close_file()
 
-        date_prefix = datetime.now(tz=timezone.utc).strftime("%Y-%m-%d")
+        date_prefix = datetime.now(tz=timezone.utc).strftime("%Y-%m-%d_%H-%M-%S")
         self.session_id = f"{date_prefix}_{uuid.uuid4().hex[:8]}"
         recordings_dir = Path(settings.MEDIA_ROOT) / "recordings"
         recordings_dir.mkdir(parents=True, exist_ok=True)
