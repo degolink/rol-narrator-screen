@@ -12,7 +12,7 @@ import {
   MicOff,
   Play,
 } from 'lucide-react';
-import { useAudioRecorder } from '@/hooks/useAudioRecorder';
+import { useAudioRecorder } from './useAudioRecorder';
 
 // ── Helpers ──────────────────────────────────────────────────────────
 
