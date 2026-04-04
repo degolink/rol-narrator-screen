@@ -1,10 +1,22 @@
 import json
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from channels.generic.websocket import AsyncWebsocketConsumer
 from django.conf import settings
+
+
+def _get_recording_tz():
+    """Return the configured recording timezone, falling back to UTC."""
+    try:
+        return ZoneInfo(getattr(settings, "RECORDING_TIMEZONE", "UTC"))
+    except ZoneInfoNotFoundError:
+        return ZoneInfo("UTC")
+
+
+RECORDING_TZ = _get_recording_tz()
 
 
 class RecordingConsumer(AsyncWebsocketConsumer):
@@ -60,14 +72,14 @@ class RecordingConsumer(AsyncWebsocketConsumer):
         # Close any previous session that wasn't stopped cleanly
         self._close_file()
 
-        date_prefix = datetime.now(tz=timezone.utc).strftime("%Y-%m-%d_%H-%M-%S")
+        date_prefix = datetime.now(tz=RECORDING_TZ).strftime("%Y-%m-%d_%H-%M-%S")
         self.session_id = f"{date_prefix}_{uuid.uuid4().hex[:8]}"
         recordings_dir = Path(settings.MEDIA_ROOT) / "recordings"
         recordings_dir.mkdir(parents=True, exist_ok=True)
 
         file_path = recordings_dir / f"{self.session_id}.ogg"
         self.file_handle = open(file_path, "ab")  # noqa: SIM115
-        self.started_at = datetime.now(tz=timezone.utc)
+        self.started_at = datetime.now(tz=RECORDING_TZ)
 
         await self.send(
             text_data=json.dumps({"type": "started", "session_id": self.session_id})
@@ -92,7 +104,7 @@ class RecordingConsumer(AsyncWebsocketConsumer):
         # Enforce max duration
         max_duration = getattr(settings, "AUDIO_MAX_DURATION_SECONDS", 6 * 60 * 60)
         if self.started_at:
-            elapsed = (datetime.now(tz=timezone.utc) - self.started_at).total_seconds()
+            elapsed = (datetime.now(tz=RECORDING_TZ) - self.started_at).total_seconds()
             if elapsed >= max_duration:
                 self._close_file()
                 await self.send(

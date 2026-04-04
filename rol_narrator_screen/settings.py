@@ -234,6 +234,7 @@ MEDIA_ROOT = BASE_DIR / "media"
 
 # Audio recording limits
 AUDIO_MAX_DURATION_SECONDS = 6 * 60 * 60  # 6 hours
+RECORDING_TIMEZONE = os.getenv("RECORDING_TIMEZONE", "UTC")
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
