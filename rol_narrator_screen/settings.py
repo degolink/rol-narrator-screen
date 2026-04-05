@@ -174,10 +174,32 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-EMAIL_HOST = "mailpit"
-EMAIL_PORT = 1025
-EMAIL_USE_TLS = False
-DEFAULT_FROM_EMAIL = f"noreply@{FRONTEND_DOMAIN}"
+
+
+# Docker Compose passes env vars as empty strings when not set in .env.
+# Use _env() to treat empty strings the same as absent vars, falling back to a given default.
+def _env(key, default):
+    val = os.getenv(key, "").strip()
+    return val if val else default
+
+
+_smtp_password = _env("EMAIL_HOST_PASSWORD", "")
+if _smtp_password:
+    # Real email (Brevo or similar) — activated when EMAIL_HOST_PASSWORD is set in .env
+    EMAIL_HOST = _env("EMAIL_HOST", "smtp-relay.brevo.com")
+    EMAIL_PORT = int(_env("EMAIL_PORT", "587"))
+    EMAIL_HOST_USER = _env("EMAIL_HOST_USER", "")
+    EMAIL_HOST_PASSWORD = _smtp_password
+    EMAIL_USE_TLS = _env("EMAIL_USE_TLS", "True") == "True"
+    DEFAULT_FROM_EMAIL = _env("DEFAULT_FROM_EMAIL", f"noreply@{FRONTEND_DOMAIN}")
+else:
+    # Mailpit (local development fallback)
+    EMAIL_HOST = _env("EMAIL_HOST", "mailpit")
+    EMAIL_PORT = int(_env("EMAIL_PORT", "1025"))
+    EMAIL_HOST_USER = ""
+    EMAIL_HOST_PASSWORD = ""
+    EMAIL_USE_TLS = False
+    DEFAULT_FROM_EMAIL = f"noreply@{FRONTEND_DOMAIN}"
 
 # Passwordless Settings
 ACCOUNT_EMAIL_REQUIRED = True

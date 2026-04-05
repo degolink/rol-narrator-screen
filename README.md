@@ -66,15 +66,39 @@ This project uses a passwordless login system:
 1.  Enter your email on the home page.
 2.  If it's your first time, you'll be asked for a username.
 3.  The system will generate an access link (Magic Link).
-4.  **In development:** You can access the Magic Link at [https://rol.local/email](https://rol.local/email).
-5.  Click the link to log in automatically.
+4.  Click the link to log in automatically.
+
+#### Email delivery modes
+
+| Mode | When | How |
+|---|---|---|
+| **Mailpit (local)** | `EMAIL_HOST_PASSWORD` not set in `.env` | Magic links captured at [https://rol.local/email](https://rol.local/email) — no real emails sent |
+| **Real email (Brevo)** | `EMAIL_HOST_PASSWORD` set in `.env` | Magic links sent to the user's actual inbox |
+
+**To enable real email delivery via [Brevo](https://brevo.com):**
+
+1. Create a free account at [brevo.com](https://brevo.com).
+2. Verify your sender email at **Settings → Senders & IPs**.
+3. Get your SMTP key at **Settings → SMTP & API → SMTP tab**.
+4. Uncomment and fill in the Brevo block in your `.env`:
+   ```dotenv
+   EMAIL_HOST=smtp-relay.brevo.com
+   EMAIL_PORT=587
+   EMAIL_HOST_USER=your-brevo-login-email
+   EMAIL_HOST_PASSWORD=your-brevo-smtp-key
+   DEFAULT_FROM_EMAIL=your-verified-sender-email
+   ```
+5. Restart the backend — emails will now be delivered to real inboxes.
+
+> [!TIP]
+> Leave `EMAIL_HOST_PASSWORD` commented out to fall back to Mailpit automatically. No code change needed.
 
 ---
 
 ### Ports and Services:
 
 - **Gateway (Caddy)**: `https://rol.local` (Port 443 by default, or your custom `FRONTEND_URL`).
-- **Local Email Service (Mailpit)**: [https://rol.local/email](https://rol.local/email) (Access Magic Links here during development).
+- **Local Email Service (Mailpit)**: [https://rol.local/email](https://rol.local/email) (Access Magic Links here during development, when Brevo is not configured).
 - HTTP traffic (80) is automatically redirected to HTTPS.
 
 ---
