@@ -1,20 +1,44 @@
+import os
+import traceback
+
+import numpy as np
+import torch
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from django.conf import settings
 from django.contrib.auth import login
 from django.contrib.auth.models import User
+from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
 from django.core.mail import send_mail
 from django.db.models import Q
 from django.utils import timezone
+from pydub import AudioSegment
 from rest_framework import filters, pagination, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
+from speechbrain.inference import EncoderClassifier
 
-from .models import Character, ChatMessage, MagicToken, UserProfile
-from .serializers import CharacterSerializer, ChatMessageSerializer, UserSerializer
+from rol_narrator_screen.celery import app as celery_app
+
+from .models import (
+    Character,
+    ChatMessage,
+    MagicToken,
+    PerfilDeVoz,
+    SesionDeCronica,
+    UserProfile,
+)
+from .serializers import (
+    CharacterSerializer,
+    ChatMessageSerializer,
+    SesionDeCronicaSerializer,
+    UserSerializer,
+)
+from .tasks import process_chronicler_session
 
 
 class RequestMagicLinkView(APIView):
@@ -381,6 +405,80 @@ class ProfileViewSet(viewsets.GenericViewSet):
             )
         return Response(data)
 
+    @action(detail=False, methods=["post"])
+    def enroll_voice(self, request):
+        """Enrolls a user's voice by extracting speaker embeddings."""
+        audio_file = request.FILES.get("audio")
+        if not audio_file:
+            return Response(
+                {"error": "Se requiere un archivo de audio."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        user = request.user
+        # Save temp file
+        temp_path = os.path.join(settings.MEDIA_ROOT, f"temp/enroll_{user.id}.wav")
+        os.makedirs(os.path.dirname(temp_path), exist_ok=True)
+
+        # Efficiently save file to disk in chunks to manage RAM usage
+        with open(temp_path, "wb") as f:
+            for chunk in audio_file.chunks():
+                f.write(chunk)
+
+        try:
+            # Normalize audio (16kHz, mono) using pydub
+            audio = AudioSegment.from_file(temp_path)
+            audio = audio.set_frame_rate(16000).set_channels(1)
+            audio.export(temp_path, format="wav")
+
+            # Load SpeechBrain model
+            model_dir = os.path.join(settings.MEDIA_ROOT, "models/speechbrain")
+            os.makedirs(model_dir, exist_ok=True)
+            classifier = EncoderClassifier.from_hparams(
+                source="speechbrain/spkrec-ecapa-voxceleb",
+                savedir=model_dir,
+                run_opts={"device": "cpu"},
+            )
+
+            # Extract signal from pydub for SpeechBrain
+            samples = np.array(audio.get_array_of_samples()).astype(np.float32)
+            # Normalize to [-1, 1] for 16-bit PCM
+            if audio.sample_width == 2:
+                samples /= 32768.0
+
+            # Convert to PyTorch Tensor and add batch dimension [1, sequence_length]
+            signal = torch.from_numpy(samples).unsqueeze(0)
+
+            # Extract embedding using SpeechBrain
+            embeddings = classifier.encode_batch(signal)
+            # Flatten tensor dimensions and convert to standard Python list for DB storage
+            embedding_list = embeddings.squeeze().tolist()
+
+            # Save to Profile (Overwrite if exists)
+            PerfilDeVoz.objects.update_or_create(
+                user=user, defaults={"embedding": embedding_list}
+            )
+
+            # Also save sample for training/debugging if requested
+            sample_dir = os.path.join(settings.MEDIA_ROOT, "voice_samples")
+            os.makedirs(sample_dir, exist_ok=True)
+            sample_path = os.path.join(sample_dir, f"user_{user.id}_sample.wav")
+            audio.export(sample_path, format="wav")
+
+            # Refetch user to include new voice profile in response
+            serializer = self.get_serializer(user)
+            return Response(serializer.data)
+
+        except Exception as e:
+            traceback.print_exc()
+            return Response(
+                {"error": f"Error al procesar la voz: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+        finally:
+            if os.path.exists(temp_path):
+                os.remove(temp_path)
+
     def _broadcast_profile_update(self, user, notification=None, force_refresh=False):
         channel_layer = get_channel_layer()
         data = UserSerializer(user).data
@@ -439,4 +537,53 @@ class ChatMessageViewSet(viewsets.ReadOnlyModelViewSet):
             Q(message_type__in=["IC", "OOC"])
             | Q(message_type="WHISPER", sender_user=user)
             | Q(message_type="WHISPER", recipient_user=user)
+        )
+
+
+class ChroniclerViewSet(viewsets.ModelViewSet):
+    queryset = SesionDeCronica.objects.all().order_by("-date")
+    serializer_class = SesionDeCronicaSerializer
+    permission_classes = [IsAuthenticated]
+
+    @action(detail=True, methods=["post"])
+    def process(self, request, pk=None):
+        session = self.get_object()
+        if session.status in ["Transcribiendo...", "Resumiendo..."]:
+            return Response(
+                {"error": "Ya se está procesando esta sesión."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        task = process_chronicler_session.delay(session.id)
+        session.celery_task_id = task.id
+        session.status = "Transcribiendo..."
+        session.save()
+
+        return Response({"message": "Procesamiento iniciado", "task_id": task.id})
+
+    @action(detail=True, methods=["post"])
+    def postpone(self, request, pk=None):
+        session = self.get_object()
+        if not session.celery_task_id:
+            return Response(
+                {"error": "No hay una tarea activa para posponer."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Revoke current task
+        celery_app.control.revoke(session.celery_task_id, terminate=True)
+
+        # Reschedule with 2 hours ETA
+        eta = timezone.now() + timezone.timedelta(hours=2)
+        new_task = process_chronicler_session.apply_async((session.id,), eta=eta)
+
+        session.celery_task_id = new_task.id
+        session.status = "Pausado"
+        session.save()
+
+        return Response(
+            {
+                "message": "Procesamiento pospuesto por 2 horas",
+                "new_task_id": new_task.id,
+            }
         )

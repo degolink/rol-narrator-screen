@@ -1,11 +1,11 @@
 import { useMemo } from 'react';
 import { NavLink, Link, useMatch } from 'react-router-dom';
-import { BookOpen, Users, LogOut, User as UserIcon, Mic } from 'lucide-react';
+import { BookOpen, Users, LogOut, Mic, Hammer, Scroll } from 'lucide-react';
 import { useUser } from '@/context/UserContext';
 import { Button } from './ui/button';
 
 export function NavBar() {
-  const { user, logout } = useUser();
+  const { user, logout, isRecordingGlobal } = useUser();
   const isCharacterDetail = useMatch('/personaje/*');
   const isLogin = useMatch('/login');
   const isVerify = useMatch('/verify');
@@ -16,16 +16,20 @@ export function NavBar() {
 
     return [
       ...(isDM
-        ? [{ path: '/narrador', label: 'Narrador', icon: BookOpen }]
-        : []),
-      {
-        path: '/personajes',
-        label: 'Personajes',
-        icon: Users,
-        extraActiveState: !!isCharacterDetail,
-      },
+        ? [
+            { path: '/narrador', label: 'Narrador', icon: BookOpen },
+            { path: '/forja', label: 'La Forja', icon: Hammer },
+          ]
+        : [
+            {
+              path: '/personajes',
+              label: 'Personajes',
+              icon: Users,
+              extraActiveState: !!isCharacterDetail,
+            },
+          ]),
+      { path: '/codice', label: 'El Códice', icon: Scroll },
       { path: '/grabadora', label: 'Grabadora', icon: Mic },
-      { path: '/perfil', label: 'Perfil', icon: UserIcon },
     ];
   }, [user, isLogin, isVerify, isDM, isCharacterDetail]);
 
@@ -75,6 +79,14 @@ export function NavBar() {
           </div>
 
           <div className="flex items-center gap-4">
+            {isRecordingGlobal && (
+              <div className="flex items-center gap-2 px-3 py-1 bg-red-500/10 border border-red-500/20 rounded-full animate-pulse">
+                <div className="w-2 h-2 bg-red-600 rounded-full shadow-[0_0_8px_rgba(220,38,38,0.8)]" />
+                <span className="text-[10px] font-black text-red-500 uppercase tracking-tighter">
+                  REC
+                </span>
+              </div>
+            )}
             {user ? (
               <>
                 <Link

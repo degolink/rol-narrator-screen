@@ -14,8 +14,6 @@ export function RecorderCard() {
     recorderState,
     micPermission,
     startRecording,
-    pauseRecording,
-    resumeRecording,
     stopRecording,
     analyserNode,
     elapsedTime,
@@ -41,7 +39,6 @@ export function RecorderCard() {
 
   // ── Derived state ──────────────────────────────────────────────────
   const isRecording = recorderState === 'recording';
-  const isPaused = recorderState === 'paused';
   const isInactive = recorderState === 'inactive';
   const connInfo =
     CONNECTION_LABELS[connectionState] ??
@@ -75,18 +72,14 @@ export function RecorderCard() {
         <RecorderTimer
           elapsedTime={elapsedTime}
           isRecording={isRecording}
-          isPaused={isPaused}
           isInactive={isInactive}
         />
 
         <RecorderControls
           isRecording={isRecording}
-          isPaused={isPaused}
           isInactive={isInactive}
           micPermission={micPermission}
           onStart={startRecording}
-          onResume={resumeRecording}
-          onPause={pauseRecording}
           onStop={stopRecording}
         />
 

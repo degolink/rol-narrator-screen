@@ -262,3 +262,19 @@ RECORDING_TIMEZONE = os.getenv("RECORDING_TIMEZONE", "UTC")
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# Celery settings
+CELERY_BROKER_URL = (
+    f"redis://{os.getenv('REDIS_HOST', 'localhost')}:{os.getenv('REDIS_PORT', 6379)}/0"
+)
+CELERY_RESULT_BACKEND = CELERY_BROKER_URL
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
+CELERY_TIMEZONE = TIME_ZONE
+
+# Chronicler (El Cronista) Settings
+CHRONICLER_WHISPER_MODEL = "small"
+CHRONICLER_WHISPER_COMPUTE_TYPE = "int8"
+CHRONICLER_OLLAMA_URL = os.getenv("CHRONICLER_OLLAMA_URL", "http://ollama:11434")
+CHRONICLER_CHECKPOINT_SECONDS = 30

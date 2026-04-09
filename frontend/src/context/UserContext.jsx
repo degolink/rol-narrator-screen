@@ -17,6 +17,8 @@ const UserContext = createContext();
 export function UserContextProvider({ children }) {
   const [user, setUser] = useState();
   const [loading, setLoading] = useState(true);
+  const [isRecordingGlobal, setIsRecordingGlobal] = useState(false);
+  const [recordingUser, setRecordingUser] = useState(null);
   const isDungeonMaster = user?.profile?.is_dungeon_master;
   const activeCharacter = user?.profile?.active_character;
 
@@ -48,6 +50,20 @@ export function UserContextProvider({ children }) {
       if (lastJsonMessage.force_refresh) {
         window.dispatchEvent(new CustomEvent('chat:refresh_data'));
       }
+    }
+
+    if (lastJsonMessage?.type === 'recording_status') {
+      const { status, user: sender } = lastJsonMessage;
+      const isStarted = status === 'started';
+      setIsRecordingGlobal(isStarted);
+      setRecordingUser(isStarted ? sender : null);
+
+      toast(isStarted ? '⏺ Grabación Iniciada' : '⏹ Grabación Finalizada', {
+        description: isStarted
+          ? `${sender} ha comenzado a grabar la sesión.`
+          : 'La grabación se ha guardado correctamente.',
+        duration: 4000,
+      });
     }
   }, [lastJsonMessage, user]);
 
@@ -119,6 +135,8 @@ export function UserContextProvider({ children }) {
         loading,
         isDungeonMaster,
         activeCharacter,
+        isRecordingGlobal,
+        recordingUser,
         setUser,
         logout,
         updateUser,

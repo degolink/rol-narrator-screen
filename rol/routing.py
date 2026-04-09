@@ -5,6 +5,7 @@ from django_private_chat2.urls import (
 
 from . import consumers
 from .chat_consumers import ChatConsumer
+from .cronista_consumer import ChroniclerProgressConsumer
 from .recording_consumer import RecordingConsumer
 
 websocket_urlpatterns = [
@@ -13,6 +14,7 @@ websocket_urlpatterns = [
     re_path(r"ws/characters/$", consumers.CharacterConsumer.as_asgi()),
     re_path(r"ws/chat/$", ChatConsumer.as_asgi()),
     re_path(r"ws/recording/$", RecordingConsumer.as_asgi()),
+    re_path(r"ws/cronista/progress/$", ChroniclerProgressConsumer.as_asgi()),
 ]
 
 websocket_urlpatterns += chat_ws_urlpatterns

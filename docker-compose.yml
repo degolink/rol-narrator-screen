@@ -40,6 +40,29 @@ services:
       EMAIL_USE_TLS: ${EMAIL_USE_TLS:-}
       DEFAULT_FROM_EMAIL: ${DEFAULT_FROM_EMAIL:-}
 
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: rol_worker
+    command: celery -A rol_narrator_screen worker -l info
+    volumes:
+      - .:/app
+    depends_on:
+      - db
+      - redis
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      REDIS_HOST: redis
+      PYTHONUNBUFFERED: 1
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: rol_ollama
+    volumes:
+      - ollama_data:/root/.ollama
+
   frontend:
     build:
       context: ./frontend
@@ -64,6 +87,7 @@ services:
     depends_on:
       - backend
       - frontend
+      - ollama
 
   mailpit:
     image: axllent/mailpit
@@ -78,3 +102,4 @@ volumes:
   frontend_node_modules:
   caddy_data:
   caddy_config:
+  ollama_data:

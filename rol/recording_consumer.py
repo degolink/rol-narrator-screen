@@ -63,10 +63,6 @@ class RecordingConsumer(AsyncWebsocketConsumer):
             await self._start_recording()
         elif msg_type == "stop":
             await self._stop_recording()
-        elif msg_type == "pause":
-            await self._pause_recording()
-        elif msg_type == "resume":
-            await self._resume_recording()
 
     async def _start_recording(self):
         # Close any previous session that wasn't stopped cleanly
@@ -81,19 +77,69 @@ class RecordingConsumer(AsyncWebsocketConsumer):
         self.file_handle = open(file_path, "ab")  # noqa: SIM115
         self.started_at = datetime.now(tz=RECORDING_TZ)
 
+        # Broadcast start
+        await self.channel_layer.group_send(
+            "broadcast",
+            {
+                "type": "recording_status",
+                "status": "started",
+                "user": self.user.username,
+            },
+        )
+
         await self.send(
             text_data=json.dumps({"type": "started", "session_id": self.session_id})
         )
 
     async def _stop_recording(self):
+        file_name = f"{self.session_id}.ogg"
         self._close_file()
+
+        # Aggregation logic: Group by day + Capture Snapshot
+        from asgiref.sync import sync_to_async
+
+        from .models import SesionDeCronica, UserProfile
+
+        today = datetime.now(tz=RECORDING_TZ).date()
+
+        def get_snapshot():
+            profiles = UserProfile.objects.select_related(
+                "user", "active_character"
+            ).all()
+            return {
+                p.user.id: p.active_character.id if p.active_character else None
+                for p in profiles
+            }
+
+        snapshot = await sync_to_async(get_snapshot)()
+
+        def update_session():
+            session, _ = SesionDeCronica.objects.get_or_create(date=today)
+            # audio_files structure: [{"path": "...", "snapshot": {...}}]
+            if not isinstance(session.audio_files, list):
+                session.audio_files = []
+
+            entry = {
+                "path": f"recordings/{file_name}",
+                "snapshot": snapshot,
+                "timestamp": datetime.now(tz=RECORDING_TZ).isoformat(),
+            }
+            session.audio_files.append(entry)
+            session.save()
+
+        await sync_to_async(update_session)()
+
+        # Broadcast stop
+        await self.channel_layer.group_send(
+            "broadcast",
+            {
+                "type": "recording_status",
+                "status": "stopped",
+                "user": self.user.username,
+            },
+        )
+
         await self.send(text_data=json.dumps({"type": "stopped"}))
-
-    async def _pause_recording(self):
-        await self.send(text_data=json.dumps({"type": "paused"}))
-
-    async def _resume_recording(self):
-        await self.send(text_data=json.dumps({"type": "resumed"}))
 
     # ── Binary audio data ─────────────────────────────────────────────
 

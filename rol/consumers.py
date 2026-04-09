@@ -82,17 +82,31 @@ class UserConsumer(AsyncWebsocketConsumer):
 
         self.user_group = f"user_{self.user.id}"
 
-        # Join private group
+        # Join private group and global broadcast group
         await self.channel_layer.group_add(self.user_group, self.channel_name)
+        await self.channel_layer.group_add("broadcast", self.channel_name)
 
         await self.accept()
 
     async def disconnect(self, close_code):
         if hasattr(self, "user_group"):
             await self.channel_layer.group_discard(self.user_group, self.channel_name)
+            await self.channel_layer.group_discard("broadcast", self.channel_name)
 
     async def profile_update_event(self, event):
         # Send full profile data to the WebSocket client
         await self.send(
             text_data=json.dumps({"type": "profile_update", "data": event["data"]})
+        )
+
+    async def recording_status(self, event):
+        # Forward broadcast to WebSocket
+        await self.send(
+            text_data=json.dumps(
+                {
+                    "type": "recording_status",
+                    "status": event["status"],
+                    "user": event["user"],
+                }
+            )
         )

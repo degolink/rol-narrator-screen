@@ -116,25 +116,6 @@ export function useAudioRecorder() {
         queue.forEach((chunk) => sendMessage(chunk));
         chunkQueueRef.current = [];
       }
-      // Resume MediaRecorder if it was paused due to a socket drop
-      if (
-        mediaRecorderRef.current &&
-        mediaRecorderRef.current.state === 'paused' &&
-        recorderStateRef.current === 'recording'
-      ) {
-        mediaRecorderRef.current.resume();
-      }
-    } else if (
-      readyState === ReadyState.CLOSED ||
-      readyState === ReadyState.CLOSING
-    ) {
-      // Pause MediaRecorder if socket drops (keep UI state as "recording")
-      if (
-        mediaRecorderRef.current &&
-        mediaRecorderRef.current.state === 'recording'
-      ) {
-        mediaRecorderRef.current.pause();
-      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [readyState]);
@@ -144,9 +125,7 @@ export function useAudioRecorder() {
     if (recorderState === 'recording') {
       startTimeRef.current = Date.now();
       timerIntervalRef.current = setInterval(() => {
-        const seconds =
-          Math.floor((Date.now() - startTimeRef.current) / 1000) +
-          pausedElapsedRef.current;
+        const seconds = Math.floor((Date.now() - startTimeRef.current) / 1000);
         setElapsedTime(seconds);
 
         if (seconds >= MAX_DURATION_SECONDS) {
@@ -154,7 +133,6 @@ export function useAudioRecorder() {
           performStop();
         }
       }, 500);
-    } else if (recorderState === 'paused') {
       if (startTimeRef.current) {
         pausedElapsedRef.current += Math.floor(
           (Date.now() - startTimeRef.current) / 1000,

@@ -95,34 +95,6 @@ class AudioConsumerTests(TransactionTestCase):
 
         await communicator.disconnect()
 
-    async def test_pause_resume(self):
-        """Test pause and resume control messages."""
-        user = await sync_to_async(User.objects.create_user)(username="audio_user4")
-        communicator = await self._get_communicator(user)
-        connected, _ = await communicator.connect()
-        self.assertTrue(connected)
-
-        # Start
-        await communicator.send_json_to({"type": "start"})
-        await communicator.receive_json_from(timeout=2)
-
-        # Pause
-        await communicator.send_json_to({"type": "pause"})
-        response = await communicator.receive_json_from(timeout=2)
-        self.assertEqual(response["type"], "paused")
-
-        # Resume
-        await communicator.send_json_to({"type": "resume"})
-        response = await communicator.receive_json_from(timeout=2)
-        self.assertEqual(response["type"], "resumed")
-
-        # Stop
-        await communicator.send_json_to({"type": "stop"})
-        response = await communicator.receive_json_from(timeout=2)
-        self.assertEqual(response["type"], "stopped")
-
-        await communicator.disconnect()
-
     async def test_disconnect_closes_file(self):
         """Disconnecting mid-recording should close the file handle safely."""
         user = await sync_to_async(User.objects.create_user)(username="audio_user5")

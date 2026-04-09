@@ -7,6 +7,8 @@ import { VerifyPage } from './pages/VerifyPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { RecorderPage } from './pages/RecorderPage';
 import { HomePage } from './pages/HomePage';
+import { CronistForgePage } from './pages/CronistForgePage/CronistForgePage';
+import { CodicePage } from './pages/CodicePage/CodicePage';
 import { NavBar } from './components/NavBar';
 import { Toaster } from './components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -24,7 +26,7 @@ function AppContent() {
   }
 
   return (
-    <div className="bg-[#0a0a0c] min-h-screen text-gray-100 font-sans flex flex-col">
+    <div className="dark bg-[#0a0a0c] min-h-screen text-gray-100 font-sans flex flex-col">
       {user && <NavBar />}
 
       <TooltipProvider>
@@ -64,6 +66,22 @@ function AppContent() {
               element={
                 <ProtectedRoute>
                   <RecorderPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/forja"
+              element={
+                <ProtectedRoute>
+                  <CronistForgePage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/codice"
+              element={
+                <ProtectedRoute>
+                  <CodicePage />
                 </ProtectedRoute>
               }
             />

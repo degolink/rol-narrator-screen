@@ -5,12 +5,46 @@ from .models import (
     Character,
     ChatMessage,
     Condition,
+    FragmentoDeTranscripcion,
     InventoryItem,
     Item,
     MagicToken,
+    PerfilDeVoz,
+    SesionDeCronica,
     Spell,
     UserProfile,
 )
+
+
+class FragmentoDeTranscripcionSerializer(serializers.ModelSerializer):
+    character_name = serializers.ReadOnlyField(source="character.name")
+
+    class Meta:
+        model = FragmentoDeTranscripcion
+        fields = ["id", "text", "timestamp", "character", "character_name", "is_dm"]
+
+
+class SesionDeCronicaSerializer(serializers.ModelSerializer):
+    fragments = FragmentoDeTranscripcionSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = SesionDeCronica
+        fields = [
+            "id",
+            "date",
+            "audio_files",
+            "summary",
+            "status",
+            "last_processed_timestamp",
+            "created_at",
+            "fragments",
+        ]
+
+
+class PerfilDeVozSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PerfilDeVoz
+        fields = ["id", "created_at"]
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
@@ -21,6 +55,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
 class UserSerializer(serializers.ModelSerializer):
     profile = UserProfileSerializer(read_only=True)
+    voice_profiles = PerfilDeVozSerializer(many=True, read_only=True)
     assigned_characters_count = serializers.SerializerMethodField()
     first_character_id = serializers.SerializerMethodField()
 
@@ -33,6 +68,7 @@ class UserSerializer(serializers.ModelSerializer):
             "first_name",
             "last_name",
             "profile",
+            "voice_profiles",
             "assigned_characters_count",
             "first_character_id",
         ]

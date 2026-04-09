@@ -1,8 +1,11 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Header } from '../components/Header';
 import { toast } from 'sonner';
-import { useUser } from '../context/UserContext';
+import { cn } from '@/lib/cn';
+import { useUser } from '@/context/UserContext';
+import { useCharacters } from '@/hooks/characters/useCharacters';
+import { VoiceEnrollment } from '@/components/VoiceEnrollment';
+import { Header } from '@/components/Header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -17,16 +20,16 @@ import {
   CardContent,
   CardFooter,
 } from '@/components/ui/card';
-import { cn } from '@/lib/cn';
-import { useCharacters } from '@/hooks/characters/useCharacters';
 
 export function ProfilePage() {
   const navigate = useNavigate();
   const [saving, setSaving] = useState(false);
   const [togglingRole, setTogglingRole] = useState(false);
 
-  const { user, updateUser, assignCharacterToUser } = useUser();
+  const { user, updateUser, assignCharacterToUser, isRecordingGlobal } =
+    useUser();
   const isDungeonMaster = user?.profile?.is_dungeon_master;
+  const hasVoiceProfile = !!user?.voice_profiles?.length;
 
   const { characters } = useCharacters();
   const playerCharacters = useMemo(
@@ -68,6 +71,12 @@ export function ProfilePage() {
   };
 
   const handleAssignCharacter = async (charId) => {
+    if (isRecordingGlobal) {
+      toast.error(
+        'No puedes cambiar de personaje mientras hay una grabación activa.',
+      );
+      return;
+    }
     try {
       await assignCharacterToUser(charId);
       toast.success('Personaje reclamado correctamente');
@@ -205,7 +214,10 @@ export function ProfilePage() {
             </CardContent>
           </Card>
 
-          {/* Section 3: Character Selection (Conditional) */}
+          {/* Section 3: Voice Enrollment */}
+          <VoiceEnrollment hasProfile={hasVoiceProfile} />
+
+          {/* Section 4: Character Selection (Conditional) */}
           {!isDungeonMaster && (
             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
               <div className="space-y-1 px-1">
@@ -268,8 +280,16 @@ export function ProfilePage() {
                             <div className="flex items-center gap-2">
                               {isAssignedToMe ? (
                                 <div
-                                  className="flex flex-col items-end gap-1 cursor-pointer hover:opacity-70 transition-opacity"
-                                  onClick={() => handleAssignCharacter(char.id)}
+                                  className={cn(
+                                    'flex flex-col items-end gap-1 transition-opacity',
+                                    isRecordingGlobal
+                                      ? 'cursor-not-allowed opacity-30'
+                                      : 'cursor-pointer hover:opacity-70',
+                                  )}
+                                  onClick={() =>
+                                    !isRecordingGlobal &&
+                                    handleAssignCharacter(char.id)
+                                  }
                                 >
                                   <Badge
                                     variant="outline"
@@ -288,6 +308,7 @@ export function ProfilePage() {
                                     isAssignedToOther ? 'secondary' : 'default'
                                   }
                                   onClick={() => handleAssignCharacter(char.id)}
+                                  disabled={isRecordingGlobal}
                                   className={cn(
                                     'font-black rounded-lg px-6',
                                     isAssignedToOther
@@ -341,7 +362,10 @@ export function ProfilePage() {
                 variant="outline"
                 size="sm"
                 className="mt-4 border-destructive/20 text-destructive hover:bg-destructive/10"
-                onClick={() => handleToggleDungeonMaster(false)}
+                onClick={() =>
+                  !isRecordingGlobal && handleToggleDungeonMaster(false)
+                }
+                disabled={isRecordingGlobal}
               >
                 Volver a ser Jugador
               </Button>
