@@ -123,7 +123,10 @@ export function useAudioRecorder() {
   // ── Timer ──────────────────────────────────────────────────────────
   useEffect(() => {
     if (recorderState === 'recording') {
+      // Clear any previous interval before creating a new one
+      clearInterval(timerIntervalRef.current);
       startTimeRef.current = Date.now();
+
       timerIntervalRef.current = setInterval(() => {
         const seconds = Math.floor((Date.now() - startTimeRef.current) / 1000);
         setElapsedTime(seconds);
@@ -133,14 +136,8 @@ export function useAudioRecorder() {
           performStop();
         }
       }, 500);
-      if (startTimeRef.current) {
-        pausedElapsedRef.current += Math.floor(
-          (Date.now() - startTimeRef.current) / 1000,
-        );
-      }
-      clearInterval(timerIntervalRef.current);
     } else {
-      // inactive
+      // inactive / paused — stop the timer and reset
       clearInterval(timerIntervalRef.current);
       setElapsedTime(0);
       pausedElapsedRef.current = 0;
