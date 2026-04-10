@@ -23,7 +23,7 @@ export function SessionSidebar({ sessions, selectedSession, onSelectSession }) {
                 {new Date(s.date).toLocaleDateString('es-ES')}
               </span>
               <span className="font-serif block truncate">
-                {s.summary?.split('\n')[0] || 'Sesión sin título'}
+                {s.summary?.trim().split('\n')[0] || 'Sesión sin título'}
               </span>
             </button>
           ))}

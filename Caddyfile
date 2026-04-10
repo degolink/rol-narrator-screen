@@ -28,6 +28,13 @@
     handle /ws/* {
         reverse_proxy backend:8000
     }
+    
+    # Static Media Files
+    handle /media/* {
+        file_server {
+            root /
+        }
+    }
 
     # Proxy for the Mailpit (Email service)
     handle /email* {

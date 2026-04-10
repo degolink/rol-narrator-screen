@@ -86,7 +86,13 @@ export function UserContextProvider({ children }) {
   }, []);
 
   const assignCharacterToUser = useCallback(async (characterId) => {
-    return await authService.assignCharacter(characterId);
+    const resp = await authService.assignCharacter(characterId);
+    toast.success(
+      resp.data.action === 'assigned'
+        ? 'Personaje reclamado'
+        : 'Personaje liberado',
+    );
+    return resp.data;
   }, []);
 
   const setActiveCharacter = useCallback(async (characterId) => {

@@ -13,21 +13,23 @@ export function CharactersDrawer({ isOpen, onClose, mode, character }) {
   if (!isOpen) return null;
   return (
     <Sheet open onOpenChange={(open) => !open && onClose()}>
-      <SheetContent className="w-full data-[side=right]:sm:max-w-xl data-[side=right]:md:max-w-2xl data-[side=right]:lg:max-w-3xl bg-gray-900 border-gray-800 text-gray-100 overflow-y-auto p-0 flex flex-col">
-        <SheetHeader className="p-6 pb-4 border-b border-gray-800 sticky top-0 bg-gray-900 z-10 flex flex-row items-center justify-between space-y-0">
-          <SheetTitle
-            className="text-yellow-300 font-bold text-base uppercase tracking-tighter"
-            style={{ fontFamily: "'Press Start 2P', cursive" }}
-          >
-            {mode === 'edit' ? 'Editar personaje' : 'Crear personaje'}
-          </SheetTitle>
+      <SheetContent className="w-full data-[side=right]:sm:max-w-xl data-[side=right]:md:max-w-2xl bg-[#0c0c0e] border-l border-border text-gray-100 overflow-y-auto p-0 flex flex-col">
+        <SheetHeader className="p-6 pb-4 border-b border-border sticky top-0 bg-[#0c0c0e] z-10 flex flex-row items-center justify-between space-y-0">
+          <div>
+            <SheetTitle className="text-xl font-black text-yellow-400 uppercase tracking-tighter italic">
+              {mode === 'edit' ? 'Editar Personaje' : 'Crear Personaje'}
+            </SheetTitle>
+            <p className="text-gray-500 text-[10px] font-bold uppercase tracking-widest mt-0.5">
+              Panel del Narrador
+            </p>
+          </div>
           <Button
             variant="ghost"
-            size="icon"
+            size="icon-sm"
             onClick={onClose}
-            className="text-gray-400 hover:text-white"
+            className="text-gray-500 hover:text-white"
           >
-            <X className="h-5 w-5" />
+            <X className="h-4 w-4" />
           </Button>
         </SheetHeader>
 
