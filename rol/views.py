@@ -551,22 +551,25 @@ class CharacterViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         is_dm = UserProfile.objects.filter(user=user, is_dungeon_master=True).exists()
-        # print(f"DEBUG_QS: User={user.username}, is_dm={is_dm}", flush=True)
 
         if is_dm:
             queryset = Character.objects.all()
         else:
-            # Regular users only see visible characters
+            # Regular users ONLY see visible characters, period.
             queryset = Character.objects.filter(visible=True)
 
-        queryset = queryset.order_by("-visible", "name")
+        # Apply additional visibility filter if requested (DMs only or narrowing down)
         visible_only = self.request.query_params.get("visible", None)
         if visible_only is not None:
             if visible_only.lower() == "true":
                 queryset = queryset.filter(visible=True)
-            elif visible_only.lower() == "false":
+            elif visible_only.lower() == "false" and is_dm:
                 queryset = queryset.filter(visible=False)
-        return queryset
+            elif visible_only.lower() == "false":
+                # Regular user asking for invisible characters gets nothing
+                queryset = queryset.none()
+
+        return queryset.order_by("-visible", "name")
 
     @action(detail=False, methods=["get"])
     def my_characters(self, request):
