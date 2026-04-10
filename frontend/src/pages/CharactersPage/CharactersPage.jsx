@@ -68,33 +68,32 @@ export function CharactersPage() {
           variant="npc"
         />
 
-        {/* Creation UI */}
         <div className="flex justify-center pt-8">
           <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
             <SheetTrigger asChild>
-              <Button
-                size="lg"
-                className="bg-purple-900 hover:bg-purple-800 text-white rounded-full px-8 h-14 shadow-xl shadow-purple-900/20 group transition-all"
-              >
-                <Plus className="w-6 h-6 mr-2 group-hover:rotate-90 transition-transform duration-300" />
-                <span className="text-lg font-bold">Crear Nuevo Personaje</span>
+              <Button className="bg-purple-900 hover:bg-purple-700 text-white">
+                <Plus className="mr-2 h-5 w-5" /> Nuevo Personaje
               </Button>
             </SheetTrigger>
-            <SheetContent className="bg-[#101014] border-[#2d2d35] text-white w-full sm:max-w-xl overflow-y-auto">
-              <SheetHeader className="mb-8">
-                <SheetTitle className="text-2xl font-black text-white uppercase italic">
-                  Nuevo Héroe
-                </SheetTitle>
-                <SheetDescription className="text-gray-500">
-                  Define la identidad y los rasgos básicos de tu nuevo personaje.
-                </SheetDescription>
+            <SheetContent className="w-full data-[side=right]:sm:max-w-xl bg-[#101014] border-l border-border text-white overflow-y-auto p-0 flex flex-col">
+              <SheetHeader className="p-6 pb-4 border-b border-border sticky top-0 bg-[#101014] z-10 flex flex-row items-center justify-between space-y-0">
+                <div>
+                  <SheetTitle className="text-xl font-black text-white uppercase italic tracking-tighter">
+                    Nuevo Héroe
+                  </SheetTitle>
+                  <SheetDescription className="text-gray-500 text-xs">
+                    Define la identidad y rasgos de tu personaje.
+                  </SheetDescription>
+                </div>
               </SheetHeader>
-              <CharacterForm
-                close={(newChar) => {
-                  setIsSheetOpen(false);
-                  handleCreated(newChar);
-                }}
-              />
+              <div className="flex-1 p-6">
+                <CharacterForm
+                  close={(newChar) => {
+                    setIsSheetOpen(false);
+                    handleCreated(newChar);
+                  }}
+                />
+              </div>
             </SheetContent>
           </Sheet>
         </div>

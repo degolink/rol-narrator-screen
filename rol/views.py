@@ -47,7 +47,9 @@ class CharacterPermissions(IsAuthenticated):
         if request.method in ["GET", "HEAD", "OPTIONS"]:
             return True
 
-        is_dm = UserProfile.objects.filter(user=request.user, is_dungeon_master=True).exists()
+        is_dm = UserProfile.objects.filter(
+            user=request.user, is_dungeon_master=True
+        ).exists()
         # print(f"DEBUG: User={request.user.username}, is_dm={is_dm}, method={request.method}", flush=True)
         if is_dm:
             return True
@@ -235,7 +237,9 @@ class ProfileViewSet(viewsets.GenericViewSet):
                 assign_action = "unassigned"
             else:
                 # One character per user restriction
-                is_dm = UserProfile.objects.filter(user=user, is_dungeon_master=True).exists()
+                is_dm = UserProfile.objects.filter(
+                    user=user, is_dungeon_master=True
+                ).exists()
                 if not is_dm and Character.objects.filter(player=user).exists():
                     return Response(
                         {
@@ -430,6 +434,9 @@ class ProfileViewSet(viewsets.GenericViewSet):
                     "display_name": display_name,
                     "is_dm": profile.is_dungeon_master if profile else False,
                     "active_character_id": active_char.id if active_char else None,
+                    "image": request.build_absolute_uri(active_char.image.url)
+                    if active_char and active_char.image
+                    else None,
                 }
             )
         return Response(data)

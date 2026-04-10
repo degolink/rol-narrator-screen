@@ -1,11 +1,14 @@
 import uuid
 from datetime import timedelta
+from io import BytesIO
 
 from django.contrib.auth.models import User
+from django.core.files.base import ContentFile
 from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.utils import timezone
+from PIL import Image
 
 
 class Character(models.Model):
@@ -22,6 +25,7 @@ class Character(models.Model):
 
     visible = models.BooleanField(default=False)
     npc = models.BooleanField(default=False)
+    image = models.ImageField(upload_to="characters/avatars/", null=True, blank=True)
 
     level = models.IntegerField(default=1)
     experience = models.IntegerField(default=0)
@@ -56,6 +60,62 @@ class Character(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.char_class})"
+
+    def save(self, *args, **kwargs):
+        # Image optimization logic
+        if self.image:
+            try:
+                # Check if the image has changed by checking if it's a file object being assigned
+                # or if it's already a saved path string.
+                # If it's a file object (e.g. from a form upload), it will have an 'file' attribute or similar
+                # depending on the storage. A simple way is to check if it's an instance of UploadedFile
+                # but models shouldn't necessarily know about UploadedFile.
+                # Here we check if the file is currently 'open' or has no '.' in path if name is new.
+                # Actually, a common pattern is to check if it hasn't been saved yet.
+                is_new_image = False
+                try:
+                    # If it's newly uploaded, accessing .file might work or it might be raw
+                    if hasattr(self.image.file, "name") or self.image.file:
+                        # Simple check: if the extension is not .webp, we definitely want to process it
+                        # or if it is newly uploaded.
+                        if not self.image.name.lower().endswith(".webp"):
+                            is_new_image = True
+                except (ValueError, AttributeError):
+                    pass
+
+                if is_new_image:
+                    img = Image.open(self.image)
+                    img = img.convert("RGB")  # Ensure we can save as WebP/JPEG
+
+                    # 1. Square crop (center)
+                    width, height = img.size
+                    if width != height:
+                        min_dim = min(width, height)
+                        left = (width - min_dim) / 2
+                        top = (height - min_dim) / 2
+                        right = (width + min_dim) / 2
+                        bottom = (height + min_dim) / 2
+                        img = img.crop((left, top, right, bottom))
+
+                    # 2. Resize to 512x512 max
+                    if img.width > 512 or img.height > 512:
+                        img.thumbnail((512, 512), Image.Resampling.LANCZOS)
+
+                    # 3. Save as WebP
+                    output = BytesIO()
+                    img.save(output, format="WebP", quality=85)
+                    output.seek(0)
+
+                    # Update the image field with the new processed file
+                    new_name = f"{uuid.uuid4().hex}.webp"
+                    self.image = ContentFile(output.read(), name=new_name)
+
+            except Exception as e:
+                # We don't want to crash the whole save if image processing fails,
+                # but we should log it.
+                print(f"Error processing character image: {e}")
+
+        super().save(*args, **kwargs)
 
 
 class Spell(models.Model):

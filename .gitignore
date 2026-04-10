@@ -1,6 +1,7 @@
 # Environments
 .env
 .venv
+.gemini
 env/
 venv/
 ENV/
@@ -9,6 +10,9 @@ ENV/
 *.py[cod]
 *$py.class
 __pycache__/
+.pytest_cache/
+.ruff_cache/
+.ipynb_checkpoints/
 *.so
 
 # Django

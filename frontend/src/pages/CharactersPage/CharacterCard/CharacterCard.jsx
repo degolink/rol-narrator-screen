@@ -17,6 +17,15 @@ export function CharacterCard({ character, isMine = false, onClick }) {
       onClick={handleClick}
     >
       <CardContent className="p-4 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        {character.image && (
+          <div className="w-16 h-16 rounded-xl overflow-hidden border border-gray-800 shrink-0 shadow-inner">
+            <img
+              src={character.image}
+              alt={character.name}
+              className="w-full h-full object-cover"
+            />
+          </div>
+        )}
         <div className="flex-1 w-full">
           <div className="flex flex-wrap items-center gap-2">
             <h3 className="text-lg font-bold text-white leading-tight">

@@ -229,8 +229,12 @@ def _generate_summary(session):
 
     full_text = "\n".join(fragments_with_names)
     prompt = (
-        "Resume la siguiente sesión de RPG de forma narrativa y épica en español. "
-        f"Usa los nombres de los personajes para dar contexto:\n\n{full_text}"
+        "Genera una crónica épica para la siguiente sesión de RPG en español. "
+        "Sigue este formato estrictamente:\n"
+        "1. La primera línea debe ser UN TÍTULO ÉPICO Y CORTO para la sesión.\n"
+        "2. El resto del texto debe ser un resumen narrativo detallado.\n"
+        "Usa los nombres de los personajes para dar contexto.\n\n"
+        f"Transcripción:\n{full_text}"
     )
     return get_ai_summary(prompt)
 
