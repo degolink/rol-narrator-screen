@@ -30,7 +30,7 @@ def update_progress(session_id, progress, status):
 
 def get_ai_summary(prompt):
     url = f"{settings.CHRONICLER_OLLAMA_URL}/api/generate"
-    payload = {"model": "llama3", "prompt": prompt, "stream": False}
+    payload = {"model": "gemma4:e4b", "prompt": prompt, "stream": False}
     try:
         response = requests.post(url, json=payload, timeout=60)
         return response.json().get("response", "")

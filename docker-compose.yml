@@ -24,8 +24,12 @@ services:
     volumes:
       - .:/app
     depends_on:
-      - db
-      - redis
+      db:
+        condition: service_started
+      redis:
+        condition: service_started
+      ollama:
+        condition: service_healthy
     environment:
       DB_HOST: db
       DB_PORT: 5432
@@ -49,8 +53,12 @@ services:
     volumes:
       - .:/app
     depends_on:
-      - db
-      - redis
+      db:
+        condition: service_started
+      redis:
+        condition: service_started
+      ollama:
+        condition: service_healthy
     environment:
       DB_HOST: db
       DB_PORT: 5432
@@ -62,6 +70,18 @@ services:
     container_name: rol_ollama
     volumes:
       - ollama_data:/root/.ollama
+    entrypoint: ["/bin/sh", "-c"]
+    command: >
+      "ollama serve &
+      until ollama list > /dev/null 2>&1; do sleep 1; done &&
+      ollama pull gemma4:e4b &&
+      wait"
+    healthcheck:
+      test: ["CMD-SHELL", "ollama list | grep -q 'gemma4:e4b'"]
+      interval: 15s
+      timeout: 10s
+      retries: 30
+      start_period: 10s
 
   frontend:
     build:
@@ -85,9 +105,12 @@ services:
       - caddy_data:/data
       - caddy_config:/config
     depends_on:
-      - backend
-      - frontend
-      - ollama
+      backend:
+        condition: service_started
+      frontend:
+        condition: service_started
+      ollama:
+        condition: service_healthy
 
   mailpit:
     image: axllent/mailpit
