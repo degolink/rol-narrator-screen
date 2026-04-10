@@ -6,28 +6,27 @@ from rol.models import Character
 
 @pytest.mark.django_db
 class TestCharacters:
-    def test_list_characters(self, auth_client, character, other_character):
+    def test_list_characters(self, auth_client, user, dm_client, character, other_character):
+        user.profile.is_dungeon_master = False
+        user.profile.save()
+        
+        character.visible = True
+        character.save()
+        other_character.visible = False
+        other_character.save()
+
         url = reverse("characters-list")
         response = auth_client.get(url)
 
         assert response.status_code == 200
-        # Should see all characters (DM view or common list)
+        # Regular user sees only visible characters
+        ids = [char["id"] for char in response.data]
+        assert character.id in ids
+        assert other_character.id not in ids
+
+        # DM can see all
+        response = dm_client.get(url)
         assert len(response.data) >= 2
-
-    def test_list_characters_visible_filter(self, auth_client, character, other_character):
-        url = reverse("characters-list")
-
-        # Visible only
-        response = auth_client.get(f"{url}?visible=true")
-        assert response.status_code == 200
-        for char in response.data:
-            assert char["visible"] is True
-
-        # Invisible only
-        response = auth_client.get(f"{url}?visible=false")
-        assert response.status_code == 200
-        for char in response.data:
-            assert char["visible"] is False
 
     def test_my_characters(self, auth_client, user, character, other_character):
         url = reverse("characters-my-characters")
@@ -78,8 +77,13 @@ class TestCharacters:
         character.refresh_from_db()
         assert character.hp == 5
 
-    def test_delete_character(self, auth_client, character):
+    def test_delete_character_forbidden(self, auth_client, character):
         url = reverse("characters-detail", args=[character.id])
         response = auth_client.delete(url)
+        assert response.status_code == 403
+
+    def test_delete_character_admin(self, dm_client, character):
+        url = reverse("characters-detail", args=[character.id])
+        response = dm_client.delete(url)
         assert response.status_code == 204
         assert not Character.objects.filter(id=character.id).exists()

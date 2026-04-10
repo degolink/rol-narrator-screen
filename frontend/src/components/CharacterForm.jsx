@@ -109,7 +109,7 @@ const EMPTY = {
   background_story: '',
   motivations: '',
   npc: false,
-  visible: false,
+  visible: true,
 };
 
 function SectionTitle({ children, icon: Icon }) {
@@ -303,14 +303,14 @@ export function CharacterForm({ character, close }) {
     }
 
     try {
-      await apiService.postWithNotify(
+      const response = await apiService.postWithNotify(
         'characters/',
         formData,
         '¡Héroe creado con éxito!',
       );
       // We do NOT clear the form here, the parent handles closing the drawer
       setErrors({});
-      if (close) close();
+      if (close) close(response.data);
     } catch (err) {
       console.error('Error creating character', err);
     }

@@ -30,6 +30,18 @@ Enforce the "One Active Character" rule on the backend and secure character edit
 </task>
 
 <task type="auto">
+  <name>Secure Visibility Toggle</name>
+  <files>rol/views.py</files>
+  <action>
+    Ensure that the `visible` field in the `Character` model can only be updated by users with `is_dungeon_master=True`.
+    - Override `perform_update` in `CharacterViewSet` to check if `visible` is being changed.
+    - If non-DM attempts to change visibility, ignore that change or return an error.
+  </action>
+  <verify>python manage.py test rol.tests.test_characters</verify>
+  <done>Regular users cannot change character visibility flags.</done>
+</task>
+
+<task type="auto">
   <name>Implement Character Edit Permissions</name>
   <files>rol/views.py</files>
   <action>

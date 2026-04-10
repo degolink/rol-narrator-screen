@@ -32,6 +32,7 @@ api.interceptors.response.use(
       return Promise.reject(error);
 
     const message =
+      error.response?.data?.error ||
       error.response?.data?.detail ||
       error.response?.data?.message ||
       error.message ||

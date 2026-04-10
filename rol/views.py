@@ -41,6 +41,25 @@ from .serializers import (
 from .tasks import process_chronicler_session
 
 
+class CharacterPermissions(IsAuthenticated):
+    def has_object_permission(self, request, view, obj):
+        # Read permissions are handled by get_queryset
+        if request.method in ["GET", "HEAD", "OPTIONS"]:
+            return True
+
+        is_dm = UserProfile.objects.filter(user=request.user, is_dungeon_master=True).exists()
+        # print(f"DEBUG: User={request.user.username}, is_dm={is_dm}, method={request.method}", flush=True)
+        if is_dm:
+            return True
+
+        # Regular users can only update visible main characters
+        if request.method in ["PUT", "PATCH"]:
+            return obj.visible and not obj.npc
+
+        # Regular users cannot delete or perform other actions
+        return False
+
+
 class RequestMagicLinkView(APIView):
     permission_classes = [AllowAny]
 
@@ -215,6 +234,16 @@ class ProfileViewSet(viewsets.GenericViewSet):
                 character.player = None
                 assign_action = "unassigned"
             else:
+                # One character per user restriction
+                is_dm = UserProfile.objects.filter(user=user, is_dungeon_master=True).exists()
+                if not is_dm and Character.objects.filter(player=user).exists():
+                    return Response(
+                        {
+                            "error": "Ya tienes un personaje asignado. Libéralo o cámbialo en tu perfil."
+                        },
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
                 character.player = user
                 assign_action = "assigned"
 
@@ -500,10 +529,30 @@ class ProfileViewSet(viewsets.GenericViewSet):
 class CharacterViewSet(viewsets.ModelViewSet):
     queryset = Character.objects.none()
     serializer_class = CharacterSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [CharacterPermissions]
+
+    def perform_update(self, serializer):
+        user = self.request.user
+        is_dm = UserProfile.objects.filter(user=user, is_dungeon_master=True).exists()
+
+        # Securing Visibility: Only DM can change 'visible'
+        if "visible" in serializer.validated_data and not is_dm:
+            serializer.validated_data.pop("visible")
+
+        serializer.save()
 
     def get_queryset(self):
-        queryset = Character.objects.all().order_by("-visible", "name")
+        user = self.request.user
+        is_dm = UserProfile.objects.filter(user=user, is_dungeon_master=True).exists()
+        # print(f"DEBUG_QS: User={user.username}, is_dm={is_dm}", flush=True)
+
+        if is_dm:
+            queryset = Character.objects.all()
+        else:
+            # Regular users only see visible characters
+            queryset = Character.objects.filter(visible=True)
+
+        queryset = queryset.order_by("-visible", "name")
         visible_only = self.request.query_params.get("visible", None)
         if visible_only is not None:
             if visible_only.lower() == "true":

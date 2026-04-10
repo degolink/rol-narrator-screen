@@ -79,9 +79,8 @@ export function ProfilePage() {
     }
     try {
       await assignCharacterToUser(charId);
-      toast.success('Personaje reclamado correctamente');
     } catch {
-      toast.error('Error al reclamar el personaje');
+      /* empty */
     }
   };
 
