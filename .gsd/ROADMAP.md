@@ -12,12 +12,12 @@
 ## Phases
 
 ### Phase 1: Foundation & Identity Logic
-**Status**: ⬜ Not Started
+**Status**: ✅ Complete
 **Objective**: Enable character creation and enforce the single-identity rule.
 **Requirements**: REQ-01, REQ-02, REQ-03, REQ-04, REQ-06
-- Update Character model/views for player creation.
-- Implement backend "Active Character" check.
-- Update UI to handle DM-only visibility toggles.
+- [x] Update Character model/views for player creation.
+- [x] Implement backend "Active Character" check.
+- [x] Update UI to handle DM-only visibility toggles.
 
 ### Phase 2: Visual Identity & Media Service
 **Status**: ⬜ Not Started
