@@ -32,6 +32,7 @@ class ChronicleSessionSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "date",
+            "title",
             "audio_files",
             "summary",
             "status",

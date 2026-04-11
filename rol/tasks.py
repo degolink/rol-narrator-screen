@@ -270,9 +270,17 @@ def process_chronicler_session(self, session_id):
         session.save()
         update_progress(session.id, 90, "SUMMARIZING")
 
-        summary = _generate_summary(session)
+        summary_text = _generate_summary(session).strip()
+        
+        # Split by first newline to separate title from summary
+        lines = summary_text.split('\n', 1)
+        if len(lines) > 1:
+            session.title = lines[0].strip()
+            session.summary = lines[1].strip()
+        else:
+            session.title = "Sesión sin título"
+            session.summary = summary_text
 
-        session.summary = summary
         session.status = "COMPLETED"
         session.save()
         update_progress(session.id, 100, "COMPLETED")
