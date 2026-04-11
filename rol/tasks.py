@@ -270,19 +270,23 @@ def process_chronicler_session(self, session_id):
         session.save()
         update_progress(session.id, 90, "SUMMARIZING")
 
+        logging.info(f"[Cronista] Generando resumen para sesión {session.id}...")
         summary_text = _generate_summary(session).strip()
+        logging.info(f"[Cronista] Respuesta AI obtenida: {summary_text[:100]}...")
         
-        # Split by first newline to separate title from summary
-        lines = summary_text.split('\n', 1)
-        if len(lines) > 1:
-            session.title = lines[0].strip()
-            session.summary = lines[1].strip()
+        # Split by newline (handling multiple spaces/newlines)
+        parts = [p.strip() for p in summary_text.split('\n') if p.strip()]
+        
+        if len(parts) >= 1:
+            session.title = parts[0]
+            session.summary = '\n\n'.join(parts[1:]) if len(parts) > 1 else "Resumen pendiente"
         else:
             session.title = "Sesión sin título"
             session.summary = summary_text
 
         session.status = "COMPLETED"
         session.save()
+        logging.info(f"[Cronista] Sesión {session.id} completada exitosamente.")
         update_progress(session.id, 100, "COMPLETED")
 
     except Exception as e:

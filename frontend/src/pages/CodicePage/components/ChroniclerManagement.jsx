@@ -25,6 +25,7 @@ export function ChroniclerManagement({
   onStop,
   onStart,
   session,
+  disabled,
 }) {
   if (!session) return null;
 
@@ -81,7 +82,8 @@ export function ChroniclerManagement({
             {displayStartButton ? (
               <Button
                 onClick={() => onStart(session.id)}
-                className="bg-amber-600 hover:bg-amber-700 text-white h-9 px-4"
+                disabled={disabled}
+                className="bg-amber-600 hover:bg-amber-700 text-white h-9 px-4 disabled:opacity-50 disabled:bg-gray-800"
               >
                 <Play className="w-4 h-4 mr-2 fill-current" />
                 {statusMsg === 'COMPLETED'

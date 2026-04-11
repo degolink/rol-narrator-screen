@@ -617,9 +617,18 @@ class ChroniclerViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=["post"])
     def process(self, request, pk=None):
         session = self.get_object()
+        
+        # 1. Check if CURRENT session is already processing
         if session.status in ["TRANSCRIBING", "SUMMARIZING"]:
             return Response(
-                {"error": "Ya se está procesando esta sesión."},
+                {"error": "Esta sesión ya está siendo procesada."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # 2. Check if ANY other session is processing (global limit)
+        if ChronicleSession.objects.filter(status__in=["TRANSCRIBING", "SUMMARIZING"]).exists():
+            return Response(
+                {"error": "Hay otra sesión procesándose en este momento. Por favor espera a que termine."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 

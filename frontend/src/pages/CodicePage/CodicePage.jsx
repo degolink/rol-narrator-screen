@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { BookOpen } from 'lucide-react';
 import { toast } from 'sonner';
 import useWebSocket from 'react-use-websocket';
@@ -52,23 +52,34 @@ export function CodicePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Initial load only
 
+  const sessionsRef = useRef(sessions);
+  useEffect(() => {
+    sessionsRef.current = sessions;
+  }, [sessions]);
+
   useEffect(() => {
     if (lastJsonMessage && lastJsonMessage.type === 'progress_update') {
-      setProgress(lastJsonMessage.progress);
-      setWsStatus(lastJsonMessage.status);
+      const { session_id, status, progress: newProgress } = lastJsonMessage;
 
-      // Update the status of the session in the list if it matches
-      setSessions((prev) =>
-        prev.map((s) =>
-          s.id === lastJsonMessage.session_id
-            ? { ...s, status: lastJsonMessage.status }
-            : s,
-        ),
-      );
+      setProgress(newProgress);
+      setWsStatus(status);
 
-      if (lastJsonMessage.status === 'COMPLETED') {
-        toast.success('¡El Cronista ha terminado la crónica!');
-        fetchSessions(lastJsonMessage.session_id);
+      // Only update if something changed to avoid unnecessary renders
+      setSessions((prev) => {
+        const session = prev.find((s) => s.id === session_id);
+        if (session && (session.status !== status || session.progress !== newProgress)) {
+          return prev.map((s) => (s.id === session_id ? { ...s, status: status } : s));
+        }
+        return prev;
+      });
+
+      if (status === 'COMPLETED') {
+        const wasProcessing =
+          sessionsRef.current.find((s) => s.id === session_id)?.status !== 'COMPLETED';
+        if (wasProcessing) {
+          toast.success('¡El Cronista ha terminado la crónica!');
+          fetchSessions(session_id);
+        }
       }
     }
   }, [lastJsonMessage, fetchSessions]);
@@ -94,6 +105,15 @@ export function CodicePage() {
       toast.error('Error al detener');
     }
   };
+
+  // Check if ANY session is currently processing to disable buttons globally
+  const anySessionProcessing = useMemo(
+    () =>
+      sessions.some(
+        (s) => s.status === 'TRANSCRIBING' || s.status === 'SUMMARIZING',
+      ),
+    [sessions],
+  );
 
   if (sessions.length === 0) {
     return (
@@ -145,6 +165,11 @@ export function CodicePage() {
                   readyState={readyState}
                   onStart={handleStartProcess}
                   onStop={handleStopProcess}
+                  disabled={
+                    anySessionProcessing &&
+                    selectedSession?.status !== 'TRANSCRIBING' &&
+                    selectedSession?.status !== 'SUMMARIZING'
+                  }
                 />
               )}
 
