@@ -18,7 +18,6 @@ export function NavBar() {
       ...(isDM
         ? [
             { path: '/narrador', label: 'Narrador', icon: BookOpen },
-            { path: '/forja', label: 'La Forja', icon: Hammer },
           ]
         : [
             {

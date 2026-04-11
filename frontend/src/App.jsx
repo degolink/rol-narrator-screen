@@ -70,14 +70,6 @@ function AppContent() {
               }
             />
             <Route
-              path="/forja"
-              element={
-                <ProtectedRoute>
-                  <CronistForgePage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
               path="/codice"
               element={
                 <ProtectedRoute>
