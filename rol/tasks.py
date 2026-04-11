@@ -32,11 +32,22 @@ def get_ai_summary(prompt):
     url = f"{settings.CHRONICLER_OLLAMA_URL}/api/generate"
     payload = {"model": "gemma4:e4b", "prompt": prompt, "stream": False}
     try:
-        response = requests.post(url, json=payload, timeout=60)
-        return response.json().get("response", "")
+        logging.info(f"[Cronista] Enviando petición a Ollama ({url})...")
+        response = requests.post(
+            url, json=payload, timeout=300
+        )  # Increased timeout for large models
+        if response.status_code != 200:
+            logging.error(
+                f"[Cronista] Error en Ollama: {response.status_code} - {response.text}"
+            )
+            return ""
+        result = response.json().get("response", "")
+        if not result:
+            logging.warning("[Cronista] Ollama devolvió una respuesta vacía.")
+        return result
     except Exception as e:
-        print(f"Ollama error: {e}")
-        return "No se pudo generar el resumen."
+        logging.error(f"[Cronista] Excepción al llamar a Ollama: {e}")
+        return ""
 
 
 def _build_known_profiles():
@@ -273,13 +284,15 @@ def process_chronicler_session(self, session_id):
         logging.info(f"[Cronista] Generando resumen para sesión {session.id}...")
         summary_text = _generate_summary(session).strip()
         logging.info(f"[Cronista] Respuesta AI obtenida: {summary_text[:100]}...")
-        
+
         # Split by newline (handling multiple spaces/newlines)
-        parts = [p.strip() for p in summary_text.split('\n') if p.strip()]
-        
+        parts = [p.strip() for p in summary_text.split("\n") if p.strip()]
+
         if len(parts) >= 1:
             session.title = parts[0]
-            session.summary = '\n\n'.join(parts[1:]) if len(parts) > 1 else "Resumen pendiente"
+            session.summary = (
+                "\n\n".join(parts[1:]) if len(parts) > 1 else "Resumen pendiente"
+            )
         else:
             session.title = "Sesión sin título"
             session.summary = summary_text

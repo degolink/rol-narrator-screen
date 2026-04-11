@@ -67,15 +67,21 @@ export function CodicePage() {
       // Only update if something changed to avoid unnecessary renders
       setSessions((prev) => {
         const session = prev.find((s) => s.id === session_id);
-        if (session && (session.status !== status || session.progress !== newProgress)) {
-          return prev.map((s) => (s.id === session_id ? { ...s, status: status } : s));
+        if (
+          session &&
+          (session.status !== status || session.progress !== newProgress)
+        ) {
+          return prev.map((s) =>
+            s.id === session_id ? { ...s, status: status } : s,
+          );
         }
         return prev;
       });
 
       if (status === 'COMPLETED') {
         const wasProcessing =
-          sessionsRef.current.find((s) => s.id === session_id)?.status !== 'COMPLETED';
+          sessionsRef.current.find((s) => s.id === session_id)?.status !==
+          'COMPLETED';
         if (wasProcessing) {
           toast.success('¡El Cronista ha terminado la crónica!');
           fetchSessions(session_id);
@@ -83,6 +89,20 @@ export function CodicePage() {
       }
     }
   }, [lastJsonMessage, fetchSessions]);
+
+  // keep selectedSession in sync with the sessions list data
+  useEffect(() => {
+    if (selectedSession && sessions.length > 0) {
+      const updated = sessions.find((s) => s.id === selectedSession.id);
+      if (
+        updated &&
+        (updated.status !== selectedSession.status ||
+          updated.title !== selectedSession.title)
+      ) {
+        setSelectedSession(updated);
+      }
+    }
+  }, [sessions, selectedSession]);
 
   const handleStartProcess = async (sessionId) => {
     try {
