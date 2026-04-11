@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 export function CronistStatusCard({
   progress,
   statusMsg,
+  statusLabel,
   readyState,
   onPostpone,
   onStart,
@@ -20,11 +21,11 @@ export function CronistStatusCard({
 }) {
   const isPostponeDisabled =
     !sessionId ||
-    statusMsg === 'Esperando' ||
-    statusMsg === 'Completado' ||
-    statusMsg === 'Pausado';
+    statusMsg === 'WAITING' ||
+    statusMsg === 'COMPLETED' ||
+    statusMsg === 'PAUSED';
 
-  const displayStartButton = statusMsg === 'Esperando' && sessionId;
+  const displayStartButton = statusMsg === 'WAITING' && sessionId;
 
   return (
     <Card className="md:col-span-2 border-amber-900/30 bg-[#121214]">
@@ -34,7 +35,7 @@ export function CronistStatusCard({
             <Timer className="w-5 h-5" /> Estado del Cronista
           </CardTitle>
           <Badge variant={progress === 100 ? 'success' : 'outline'}>
-            {statusMsg}
+            {statusLabel}
           </Badge>
         </div>
         <CardDescription>

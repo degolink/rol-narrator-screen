@@ -17,7 +17,7 @@ export function CodicePage() {
   useEffect(() => {
     const fetchSessions = async () => {
       try {
-        const response = await api.get('/cronista/');
+        const response = await api.get('/chronicler/');
         setSessions(response.data);
         setSelectedSession(response?.data?.[0] ?? null);
       } catch (err) {

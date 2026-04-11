@@ -9,16 +9,24 @@ import { CronistStatusCard } from './components/CronistStatusCard';
 import { SessionListCard } from './components/SessionListCard';
 import { SessionDetailsCard } from './components/SessionDetailsCard';
 
+const STATUS_LABELS = {
+  WAITING: 'Esperando',
+  TRANSCRIBING: 'Transcribiendo...',
+  SUMMARIZING: 'Resumiendo...',
+  PAUSED: 'Pausado',
+  COMPLETED: 'Completado',
+};
+
 export function CronistForgePage() {
   const { user } = useUser();
   const [sessions, setSessions] = useState([]);
   const [activeSession, setActiveSession] = useState(null);
   const [progress, setProgress] = useState(0);
-  const [statusMsg, setStatusMsg] = useState('Esperando');
+  const [statusMsg, setStatusMsg] = useState('WAITING');
 
   const wsUrl = useMemo(() => {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    return `${protocol}//${window.location.host}/ws/cronista/progress/`;
+    return `${protocol}//${window.location.host}/ws/chronicler/progress/`;
   }, []);
 
   const { lastJsonMessage, readyState } = useWebSocket(wsUrl, {
@@ -27,7 +35,7 @@ export function CronistForgePage() {
 
   const fetchSessions = useCallback(async () => {
     try {
-      const response = await api.get('/cronista/');
+      const response = await api.get('/chronicler/');
       setSessions(response.data);
     } catch (err) {
       console.error('Error fetching sessions', err);
@@ -37,7 +45,7 @@ export function CronistForgePage() {
   const handleStartProcess = useCallback(
     async (sessionId) => {
       try {
-        await api.post(`/cronista/${sessionId}/process/`);
+        await api.post(`/chronicler/${sessionId}/process/`);
         toast.info('Iniciando procesamiento...');
         fetchSessions();
       } catch (err) {
@@ -52,7 +60,7 @@ export function CronistForgePage() {
   const handlePostpone = useCallback(
     async (sessionId) => {
       try {
-        await api.post(`/cronista/${sessionId}/postpone/`);
+        await api.post(`/chronicler/${sessionId}/postpone/`);
         toast.warning('Procesamiento pospuesto 2 horas');
         fetchSessions();
       } catch (err) {
@@ -71,7 +79,7 @@ export function CronistForgePage() {
     if (lastJsonMessage && lastJsonMessage.type === 'progress_update') {
       setProgress(lastJsonMessage.progress);
       setStatusMsg(lastJsonMessage.status);
-      if (lastJsonMessage.status === 'Completado') {
+      if (lastJsonMessage.status === 'COMPLETED') {
         toast.success('¡El Cronista ha terminado de escribir la sesión!');
         fetchSessions();
       }
@@ -93,6 +101,7 @@ export function CronistForgePage() {
         <CronistStatusCard
           progress={progress}
           statusMsg={statusMsg}
+          statusLabel={STATUS_LABELS[statusMsg] || statusMsg}
           readyState={readyState}
           sessionId={sessions[0]?.id}
           onPostpone={handlePostpone}
