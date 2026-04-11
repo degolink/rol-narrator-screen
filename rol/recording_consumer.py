@@ -98,7 +98,7 @@ class RecordingConsumer(AsyncWebsocketConsumer):
         # Aggregation logic: Group by day + Capture Snapshot
         from asgiref.sync import sync_to_async
 
-        from .models import SesionDeCronica, UserProfile
+        from .models import ChronicleSession, UserProfile
 
         today = datetime.now(tz=RECORDING_TZ).date()
 
@@ -114,7 +114,7 @@ class RecordingConsumer(AsyncWebsocketConsumer):
         snapshot = await sync_to_async(get_snapshot)()
 
         def update_session():
-            session, _ = SesionDeCronica.objects.get_or_create(date=today)
+            session, _ = ChronicleSession.objects.get_or_create(date=today)
             # audio_files structure: [{"path": "...", "snapshot": {...}}]
             if not isinstance(session.audio_files, list):
                 session.audio_files = []

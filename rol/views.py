@@ -27,15 +27,15 @@ from rol_narrator_screen.celery import app as celery_app
 from .models import (
     Character,
     ChatMessage,
+    ChronicleSession,
     MagicToken,
-    PerfilDeVoz,
-    SesionDeCronica,
     UserProfile,
+    VoiceProfile,
 )
 from .serializers import (
     CharacterSerializer,
     ChatMessageSerializer,
-    SesionDeCronicaSerializer,
+    ChronicleSessionSerializer,
     UserSerializer,
 )
 from .tasks import process_chronicler_session
@@ -491,7 +491,7 @@ class ProfileViewSet(viewsets.GenericViewSet):
             embedding_list = embeddings.squeeze().tolist()
 
             # Save to Profile (Overwrite if exists)
-            PerfilDeVoz.objects.update_or_create(
+            VoiceProfile.objects.update_or_create(
                 user=user, defaults={"embedding": embedding_list}
             )
 
@@ -600,14 +600,14 @@ class ChatMessageViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class ChroniclerViewSet(viewsets.ModelViewSet):
-    queryset = SesionDeCronica.objects.all().order_by("-date")
-    serializer_class = SesionDeCronicaSerializer
+    queryset = ChronicleSession.objects.all().order_by("-date")
+    serializer_class = ChronicleSessionSerializer
     permission_classes = [IsAuthenticated]
 
     @action(detail=True, methods=["post"])
     def process(self, request, pk=None):
         session = self.get_object()
-        if session.status in ["Transcribiendo...", "Resumiendo..."]:
+        if session.status in ["TRANSCRIBING", "SUMMARIZING"]:
             return Response(
                 {"error": "Ya se está procesando esta sesión."},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -615,7 +615,7 @@ class ChroniclerViewSet(viewsets.ModelViewSet):
 
         task = process_chronicler_session.delay(session.id)
         session.celery_task_id = task.id
-        session.status = "Transcribiendo..."
+        session.status = "TRANSCRIBING"
         session.save()
 
         return Response({"message": "Procesamiento iniciado", "task_id": task.id})
@@ -637,7 +637,7 @@ class ChroniclerViewSet(viewsets.ModelViewSet):
         new_task = process_chronicler_session.apply_async((session.id,), eta=eta)
 
         session.celery_task_id = new_task.id
-        session.status = "Pausado"
+        session.status = "PAUSED"
         session.save()
 
         return Response(
