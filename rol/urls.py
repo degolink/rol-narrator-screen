@@ -14,7 +14,7 @@ router = DefaultRouter()
 router.register(r"characters", CharacterViewSet, basename="characters")
 router.register(r"chat", ChatMessageViewSet, basename="chat")
 router.register(r"profile", ProfileViewSet, basename="profile")
-router.register(r"chronicler", ChroniclerViewSet, basename="chronicler")
+router.register(r"cronista", ChroniclerViewSet, basename="cronista")
 
 urlpatterns = [
     path("auth/magic-link/", RequestMagicLinkView.as_view(), name="magic_link_request"),

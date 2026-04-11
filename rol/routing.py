@@ -14,7 +14,7 @@ websocket_urlpatterns = [
     re_path(r"ws/characters/$", consumers.CharacterConsumer.as_asgi()),
     re_path(r"ws/chat/$", ChatConsumer.as_asgi()),
     re_path(r"ws/recording/$", RecordingConsumer.as_asgi()),
-    re_path(r"ws/chronicler/progress/$", ChroniclerProgressConsumer.as_asgi()),
+    re_path(r"ws/cronista/progress/$", ChroniclerProgressConsumer.as_asgi()),
 ]
 
 websocket_urlpatterns += chat_ws_urlpatterns

@@ -12,7 +12,7 @@ from django.utils import timezone
 from faster_whisper import WhisperModel
 from pydub import AudioSegment
 
-from .models import ChronicleSession, TranscriptionFragment, VoiceProfile
+from .models import FragmentoDeTranscripcion, PerfilDeVoz, SesionDeCronica
 
 
 def update_progress(session_id, progress, status):
@@ -45,7 +45,7 @@ def _build_known_profiles():
     data needed for speaker identification. Uses select_related to avoid
     N+1 queries.
     """
-    profiles = VoiceProfile.objects.all().select_related("user__profile", "character")
+    profiles = PerfilDeVoz.objects.all().select_related("user__profile", "character")
     known_profiles = []
     for p in profiles:
         has_profile = hasattr(p.user, "profile")
@@ -129,8 +129,8 @@ def _process_segment(
 
     if duration < 0.5:
         # Skip ultra-short segments — unreliable for diarization.
-        TranscriptionFragment.objects.create(
-            session=session,
+        FragmentoDeTranscripcion.objects.create(
+            sesion=session,
             text=segment.text,
             timestamp=segment.start,
             identified_char_id=None,
@@ -158,8 +158,8 @@ def _process_segment(
         f"[Cronista] Segment: '{segment.text[:30]}...' | Duration: {duration:.2f}s"
     )
 
-    TranscriptionFragment.objects.create(
-        session=session,
+    FragmentoDeTranscripcion.objects.create(
+        sesion=session,
         text=segment.text,
         timestamp=segment.start,
         character_id=identified_char_id,
@@ -207,7 +207,7 @@ def _process_audio_entry(entry, session, model):
             session.last_processed_timestamp = segment_end
             session.save()
             progress = int(segment_end / (info.duration or 1) * 80)
-            update_progress(session.id, progress, "TRANSCRIBING")
+            update_progress(session.id, progress, "Transcribiendo...")
 
     entry["processed"] = True
     session.save()
@@ -247,12 +247,12 @@ def process_chronicler_session(self, session_id):
       2. Diarizes each segment to identify the speaking character.
       3. Generates a narrative summary via a local LLM.
     """
-    session = ChronicleSession.objects.get(id=session_id)
-    session.status = "TRANSCRIBING"
+    session = SesionDeCronica.objects.get(id=session_id)
+    session.status = "Transcribiendo..."
     session.celery_task_id = self.request.id
     session.save()
 
-    update_progress(session.id, 10, "TRANSCRIBING")
+    update_progress(session.id, 10, "Transcribiendo...")
 
     try:
         model = WhisperModel(
@@ -266,19 +266,19 @@ def process_chronicler_session(self, session_id):
                 continue
             _process_audio_entry(entry, session, model)
 
-        session.status = "SUMMARIZING"
+        session.status = "Resumiendo..."
         session.save()
-        update_progress(session.id, 90, "SUMMARIZING")
+        update_progress(session.id, 90, "Resumiendo...")
 
         summary = _generate_summary(session)
 
         session.summary = summary
-        session.status = "COMPLETED"
+        session.status = "Completado"
         session.save()
-        update_progress(session.id, 100, "COMPLETED")
+        update_progress(session.id, 100, "Completado")
 
     except Exception as e:
-        session.status = "PAUSED"
+        session.status = "Pausado"
         session.save()
         update_progress(session.id, 0, f"Error: {str(e)}")
         raise e

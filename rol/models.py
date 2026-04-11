@@ -251,7 +251,7 @@ class MagicToken(models.Model):
         return f"Token for {self.user.email} (valid until {self.expires_at})"
 
 
-class VoiceProfile(models.Model):
+class PerfilDeVoz(models.Model):
     user = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name="voice_profiles"
     )
@@ -268,34 +268,36 @@ class VoiceProfile(models.Model):
 
     def __str__(self):
         owner = self.character.name if self.character else "DM/Narrador"
-        return f"Voice Profile: {owner} ({self.user.username})"
+        return f"Huella de Voz: {owner} ({self.user.username})"
 
 
-class ChronicleSession(models.Model):
+class SesionDeCronica(models.Model):
     STATUS_CHOICES = [
-        ("WAITING", "Esperando"),
-        ("TRANSCRIBING", "Transcribiendo..."),
-        ("SUMMARIZING", "Resumiendo..."),
-        ("PAUSED", "Pausado"),
-        ("COMPLETED", "Completado"),
+        ("Esperando", "Esperando"),
+        ("Transcribiendo...", "Transcribiendo..."),
+        ("Resumiendo...", "Resumiendo..."),
+        ("Pausado", "Pausado"),
+        ("Completado", "Completado"),
     ]
     date = models.DateField(default=timezone.now)
     # List of audio file paths
     audio_files = models.JSONField(default=list)
     summary = models.TextField(blank=True, null=True)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="WAITING")
+    status = models.CharField(
+        max_length=20, choices=STATUS_CHOICES, default="Esperando"
+    )
     celery_task_id = models.CharField(max_length=255, blank=True, null=True)
     last_processed_timestamp = models.FloatField(default=0.0)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"Chronicle Session - {self.date}"
+        return f"Sesion de Cronica - {self.date}"
 
 
-class TranscriptionFragment(models.Model):
-    session = models.ForeignKey(
-        ChronicleSession, on_delete=models.CASCADE, related_name="fragments"
+class FragmentoDeTranscripcion(models.Model):
+    sesion = models.ForeignKey(
+        SesionDeCronica, on_delete=models.CASCADE, related_name="fragments"
     )
     text = models.TextField()
     timestamp = models.FloatField()
