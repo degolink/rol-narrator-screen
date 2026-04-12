@@ -41,6 +41,11 @@
         reverse_proxy mailpit:8025
     }
 
+    # Proxy for the D&D 5e API (SRD)
+    handle_path /dnd5e-api/* {
+        reverse_proxy dnd5e-api:3000
+    }
+
     # Proxy for the Frontend (Vite with HMR support)
     handle {
         reverse_proxy frontend:5173
