@@ -112,6 +112,8 @@ services:
         condition: service_started
       ollama:
         condition: service_healthy
+      dnd5e-api:
+        condition: service_started
 
   mailpit:
     image: axllent/mailpit
@@ -121,9 +123,28 @@ services:
     ports:
       - "1025:1025"
 
+  mongo:
+    image: mongo:latest
+    container_name: rol_mongo
+    volumes:
+      - mongo_data:/data/db
+    ports:
+      - "27017:27017"
+
+  dnd5e-api:
+    image: dnd5eapi/dnd5eapi:latest
+    container_name: rol_dnd5e_api
+    environment:
+      MONGODB_URI: mongodb://mongo:27017/dnd5e
+    depends_on:
+      - mongo
+    ports:
+      - "3000:3000"
+
 volumes:
   postgres_data:
   frontend_node_modules:
   caddy_data:
   caddy_config:
   ollama_data:
+  mongo_data:
