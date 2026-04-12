@@ -280,6 +280,7 @@ class ChronicleSession(models.Model):
         ("COMPLETED", "Completado"),
     ]
     date = models.DateField(default=timezone.now)
+    title = models.CharField(max_length=255, blank=True, null=True)
     # List of audio file paths
     audio_files = models.JSONField(default=list)
     summary = models.TextField(blank=True, null=True)

@@ -20,7 +20,7 @@ export function SessionSummary({ session }) {
           })}
         </Badge>
         <h2 className="text-3xl font-serif text-gray-100">
-          Relato de la Aventura
+          {session.title || 'Relato de la Aventura'}
         </h2>
       </div>
 

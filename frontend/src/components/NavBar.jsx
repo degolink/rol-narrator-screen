@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { NavLink, Link, useMatch } from 'react-router-dom';
-import { BookOpen, Users, LogOut, Mic, Hammer, Scroll } from 'lucide-react';
+import { BookOpen, Users, LogOut, Mic, Scroll } from 'lucide-react';
 import { useUser } from '@/context/UserContext';
 import { Button } from './ui/button';
 
@@ -16,10 +16,7 @@ export function NavBar() {
 
     return [
       ...(isDM
-        ? [
-            { path: '/narrador', label: 'Narrador', icon: BookOpen },
-            { path: '/forja', label: 'La Forja', icon: Hammer },
-          ]
+        ? [{ path: '/narrador', label: 'Narrador', icon: BookOpen }]
         : [
             {
               path: '/personajes',

@@ -604,12 +604,31 @@ class ChroniclerViewSet(viewsets.ModelViewSet):
     serializer_class = ChronicleSessionSerializer
     permission_classes = [IsAuthenticated]
 
+    def get_queryset(self):
+        user = self.request.user
+        is_dm = UserProfile.objects.filter(user=user, is_dungeon_master=True).exists()
+        
+        if is_dm:
+            return ChronicleSession.objects.all().order_by("-date")
+        else:
+            # Regular users only see completed chronicles
+            return ChronicleSession.objects.filter(status="COMPLETED").order_by("-date")
+
     @action(detail=True, methods=["post"])
     def process(self, request, pk=None):
         session = self.get_object()
+        
+        # 1. Check if CURRENT session is already processing
         if session.status in ["TRANSCRIBING", "SUMMARIZING"]:
             return Response(
-                {"error": "Ya se está procesando esta sesión."},
+                {"error": "Esta sesión ya está siendo procesada."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # 2. Check if ANY other session is processing (global limit)
+        if ChronicleSession.objects.filter(status__in=["TRANSCRIBING", "SUMMARIZING"]).exists():
+            return Response(
+                {"error": "Hay otra sesión procesándose en este momento. Por favor espera a que termine."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -621,28 +640,24 @@ class ChroniclerViewSet(viewsets.ModelViewSet):
         return Response({"message": "Procesamiento iniciado", "task_id": task.id})
 
     @action(detail=True, methods=["post"])
-    def postpone(self, request, pk=None):
+    def stop(self, request, pk=None):
         session = self.get_object()
         if not session.celery_task_id:
             return Response(
-                {"error": "No hay una tarea activa para posponer."},
+                {"error": "No hay una tarea activa para detener."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
         # Revoke current task
         celery_app.control.revoke(session.celery_task_id, terminate=True)
 
-        # Reschedule with 2 hours ETA
-        eta = timezone.now() + timezone.timedelta(hours=2)
-        new_task = process_chronicler_session.apply_async((session.id,), eta=eta)
-
-        session.celery_task_id = new_task.id
+        session.celery_task_id = None
         session.status = "PAUSED"
         session.save()
 
-        return Response(
-            {
-                "message": "Procesamiento pospuesto por 2 horas",
-                "new_task_id": new_task.id,
-            }
-        )
+        return Response({"message": "Procesamiento detenido"})
+
+    # Alias postpone to stop for compatibility during transition
+    @action(detail=True, methods=["post"])
+    def postpone(self, request, pk=None):
+        return self.stop(request, pk)

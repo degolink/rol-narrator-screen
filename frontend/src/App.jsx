@@ -7,7 +7,6 @@ import { VerifyPage } from './pages/VerifyPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { RecorderPage } from './pages/RecorderPage';
 import { HomePage } from './pages/HomePage';
-import { CronistForgePage } from './pages/CronistForgePage/CronistForgePage';
 import { CodicePage } from './pages/CodicePage/CodicePage';
 import { NavBar } from './components/NavBar';
 import { Toaster } from './components/ui/sonner';
@@ -66,14 +65,6 @@ function AppContent() {
               element={
                 <ProtectedRoute>
                   <RecorderPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/forja"
-              element={
-                <ProtectedRoute>
-                  <CronistForgePage />
                 </ProtectedRoute>
               }
             />
