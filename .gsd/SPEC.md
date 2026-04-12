@@ -11,6 +11,7 @@ Deepen the connection between players and their personas by allowing character s
 3. **Strict Identity Enforcement**: Implement a "One Active Character" rule for non-DM users to stabilize session identity.
 4. **Optimized Speaker Identification**: Refine the voice diarization pipeline to prioritize matches within the active character pool.
 5. **Session Data Integrity**: Ensure session names are properly auto-generated during transcription and correctly displayed in the Codice.
+6. **External SRD Integration**: Integrate the `dnd5e-api` locally to provide standard D&D 5e SRD data (spells, monsters, etc.) for character management and narration.
 
 ## Non-Goals (Out of Scope)
 - Deleting characters (soft delete or archive not required yet).
@@ -25,6 +26,8 @@ Deepen the connection between players and their personas by allowing character s
 - **Technical**: Image sizes must be capped at 5MB; final storage format should be optimized (WebP/JPEG).
 - **Architecture**: Stick to existing Django media patterns; leverage Celery for background processing.
 - **Identity**: Identification scores must exceed a threshold before branding a segment as a specific character.
+- **Infrastructure**: All external APIs must be served through Caddy to avoid CORS and centralized access.
+- **Persistence**: External database data (Mongo) must persist across container restarts.
 
 ## Success Criteria
 - [ ] Players can create a character and see it in the session list by default.
@@ -32,3 +35,5 @@ Deepen the connection between players and their personas by allowing character s
 - [ ] Attempting to select a second character triggers a guiding Toast notification.
 - [ ] The "Sesión sin titulo" bug is resolved with working auto-generation.
 - [ ] Chronicler diarization accurately maps segments to the single active user/character pair.
+- [ ] D&D 5e API is reachable at `/dnd5e-api/` and serves SRD data correctly without CORS issues.
+- [ ] MongoDB data persists after `docker-compose down`.

@@ -51,3 +51,11 @@
 - [ ] Update frontend to match new naming while maintaining Spanish UI labels.
 - [ ] Ensure migrations are handled correctly.
 
+### Phase 7: D&D 5e API Integration
+**Status**: ⬜ Not Started
+**Objective**: Integrate the official D&D 5e API locally into the Docker infrastructure.
+- Add MongoDB and dnd5e-api services to docker-compose.
+- Configure Caddy as a reverse proxy for the API.
+- Create a setup script for data initialization.
+- Update README with the new service details.
+
