@@ -100,6 +100,23 @@ This project uses a passwordless login system:
 - **Gateway (Caddy)**: `https://rol.local` (Port 443 by default, or your custom `FRONTEND_URL`).
 - **Local Email Service (Mailpit)**: [https://rol.local/email](https://rol.local/email) (Access Magic Links here during development, when Brevo is not configured).
 - HTTP traffic (80) is automatically redirected to HTTPS.
+- **D&D 5e API**: [https://rol.local/dnd5e-api/api](https://rol.local/dnd5e-api/api)
+
+---
+
+### 🎲 D&D 5e SRD Integration
+
+The project includes a local instance of the [dnd5e-api](https://github.com/5e-bits/5e-srd-api) to provide SRD data for spells, monsters, and classes.
+
+#### Initial Setup (Required Once)
+
+Before using the SRD data, you must initialize the MongoDB database. We provide a one-time setup script:
+
+```bash
+./setup.sh
+```
+
+This script will start the necessary containers and seed the database with the official SRD data.
 
 ---
 
