@@ -133,10 +133,11 @@ services:
     image: ghcr.io/5e-bits/5e-srd-api:latest
     container_name: rol_dnd5e_api
     environment:
-      MONGODB_URI: mongodb://mongo:27017/dnd5e
+      MONGODB_URI: mongodb://mongo:27017/5e-database
       REDIS_URL: redis://redis:6379
       REDIS_HOST: redis
       REDIS_PORT: 6379
+      TRUST_PROXY: "true"
     depends_on:
       - mongo
       - redis
