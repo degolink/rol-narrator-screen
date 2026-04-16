@@ -109,12 +109,12 @@
 
 ### Phase 12: Advanced SRD Navigation System
 
-**Status**: ⬜ Not Started
+**Status**: ✅ Complete
 **Objective**: Refactor the SRD Detail Modal into a global, modular navigation component controlled by context.
 
-- [ ] Implement `SRDModalContext` and `useSRDModal` hook.
-- [ ] Extract SRD views (Class, Race, Alignment) into dedicated components.
-- [ ] Create a global `SRDDetailModal` instance in `App.jsx`.
-- [ ] Implement self-contained data fetching in each view.
-- [ ] Support internal navigation via clickable SRD indices.
-- [ ] Remove local modal instances from components.
+- [x] Implement `SRDModalContext` and `useSRDModal` hook.
+- [x] Extract SRD views (Class, Race, Alignment) into dedicated components.
+- [x] Create a global `SRDDetailModal` instance in `App.jsx`.
+- [x] Implement self-contained data fetching in each view.
+- [x] Support internal navigation via clickable SRD indices.
+- [x] Remove local modal instances from components.

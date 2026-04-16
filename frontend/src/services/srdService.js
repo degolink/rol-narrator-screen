@@ -29,4 +29,10 @@ export const srdService = {
     const response = await srdApi.get(`/alignments/${index}`);
     return response.data;
   },
+  getItem: async (type, index) => {
+    // Standardize pluralization if needed, but let's assume the caller provides it correctly or we handle it here
+    const pluralType = type.endsWith('s') ? type : `${type}s`;
+    const response = await srdApi.get(`/${pluralType}/${index}`);
+    return response.data;
+  },
 };

@@ -8,7 +8,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { srdService } from '../../services/srdService';
-import { SRDDetailModal } from '../srd/SRDDetailModal/SRDDetailModal';
 
 export function OriginsSection({ formData, errors, onUpdateField }) {
   const [srdData, setSrdData] = useState({
@@ -16,13 +15,6 @@ export function OriginsSection({ formData, errors, onUpdateField }) {
     races: [],
     alignments: [],
   });
-
-  const [detailConfig, setDetailConfig] = useState(null);
-
-  const openDetails = (type, index) => {
-    if (!index || index === 'none') return;
-    setDetailConfig({ type, index });
-  };
 
   useEffect(() => {
     const fetchSrd = async () => {
@@ -48,7 +40,6 @@ export function OriginsSection({ formData, errors, onUpdateField }) {
           type="class"
           value={formData.char_class}
           required={!formData.npc}
-          onOpenDetails={openDetails}
         />
         <Select
           value={formData.char_class || ''}
@@ -77,7 +68,6 @@ export function OriginsSection({ formData, errors, onUpdateField }) {
           text="Clase Secundaria"
           type="class"
           value={formData.secondary_class}
-          onOpenDetails={openDetails}
         />
         <Select
           value={formData.secondary_class || 'none'}
@@ -105,7 +95,6 @@ export function OriginsSection({ formData, errors, onUpdateField }) {
           type="race"
           value={formData.race}
           required={!formData.npc}
-          onOpenDetails={openDetails}
         />
         <Select
           value={formData.race || ''}
@@ -135,7 +124,6 @@ export function OriginsSection({ formData, errors, onUpdateField }) {
           type="alignment"
           value={formData.alignment}
           required={!formData.npc}
-          onOpenDetails={openDetails}
         />
         <Select
           value={formData.alignment || ''}
@@ -158,15 +146,6 @@ export function OriginsSection({ formData, errors, onUpdateField }) {
           <p className="text-[10px] text-red-400">{errors.alignment}</p>
         )}
       </div>
-
-      {detailConfig && (
-        <SRDDetailModal
-          isOpen={!!detailConfig}
-          onClose={() => setDetailConfig(null)}
-          type={detailConfig.type}
-          index={detailConfig.index}
-        />
-      )}
     </div>
   );
 }

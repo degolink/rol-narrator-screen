@@ -16,6 +16,8 @@ import { UserContextProvider } from './context/UserContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { useUser } from './context/UserContext';
 import { LoadingScreen } from './components/LoadingScreen';
+import { SRDModalProvider } from './context/SRDModalContext';
+import { SRDDetailModal } from './components/srd/SRDDetailModal/SRDDetailModal';
 
 function AppContent() {
   const { user, loading } = useUser();
@@ -26,71 +28,75 @@ function AppContent() {
 
   return (
     <div className="dark bg-[#0a0a0c] min-h-screen text-gray-100 font-sans flex flex-col">
-      {user && <NavBar />}
+      <SRDModalProvider>
+        {user && <NavBar />}
 
-      <TooltipProvider>
-        <main className="flex-1">
-          <Routes>
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/verify" element={<VerifyPage />} />
+        <TooltipProvider>
+          <main className="flex-1">
+            <Routes>
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/verify" element={<VerifyPage />} />
 
-            <Route path="/" element={<HomePage />} />
+              <Route path="/" element={<HomePage />} />
 
-            <Route
-              path="/perfil"
-              element={
-                <ProtectedRoute>
-                  <ProfilePage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/narrador"
-              element={
-                <ProtectedRoute>
-                  <NarratorDashboardPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/personajes"
-              element={
-                <ProtectedRoute>
-                  <CharactersPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/grabadora"
-              element={
-                <ProtectedRoute>
-                  <RecorderPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/codice"
-              element={
-                <ProtectedRoute>
-                  <CodicePage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/personaje/:id"
-              element={
-                <ProtectedRoute>
-                  <CharacterPage />
-                </ProtectedRoute>
-              }
-            />
-          </Routes>
-        </main>
-      </TooltipProvider>
+              <Route
+                path="/perfil"
+                element={
+                  <ProtectedRoute>
+                    <ProfilePage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/narrador"
+                element={
+                  <ProtectedRoute>
+                    <NarratorDashboardPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/personajes"
+                element={
+                  <ProtectedRoute>
+                    <CharactersPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/grabadora"
+                element={
+                  <ProtectedRoute>
+                    <RecorderPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/codice"
+                element={
+                  <ProtectedRoute>
+                    <CodicePage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/personaje/:id"
+                element={
+                  <ProtectedRoute>
+                    <CharacterPage />
+                  </ProtectedRoute>
+                }
+              />
+            </Routes>
+          </main>
+        </TooltipProvider>
 
-      <Toaster richColors position="top-right" />
+        <Toaster richColors position="top-right" />
 
-      {!!user && <ChatWidget />}
+        {!!user && <ChatWidget />}
+        
+        <SRDDetailModal />
+      </SRDModalProvider>
     </div>
   );
 }
