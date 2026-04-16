@@ -108,15 +108,8 @@ This project uses a passwordless login system:
 
 The project includes a local instance of the [dnd5e-api](https://github.com/5e-bits/5e-srd-api) to provide SRD data for spells, monsters, and classes.
 
-#### Initial Setup (Required Once)
-
-Before using the SRD data, you must initialize the MongoDB database. We provide a one-time setup script:
-
-```bash
-./setup.sh
-```
-
-This script will start the necessary containers. The database is pre-seeded with the official SRD data, so no manual loading is required.
+#### Automatic Setup
+The SRD database is pre-seeded with the official data. All necessary services are automatically started when you run `./start.sh`. No extra steps are required.
 
 ---
 
