@@ -17,4 +17,16 @@ export const srdService = {
     const response = await srdApi.get('/alignments');
     return response.data.results;
   },
+  getClass: async (index) => {
+    const response = await srdApi.get(`/classes/${index}`);
+    return response.data;
+  },
+  getRace: async (index) => {
+    const response = await srdApi.get(`/races/${index}`);
+    return response.data;
+  },
+  getAlignment: async (index) => {
+    const response = await srdApi.get(`/alignments/${index}`);
+    return response.data;
+  },
 };

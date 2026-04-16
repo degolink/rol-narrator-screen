@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Info } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import {
   Select,
@@ -8,6 +9,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { srdService } from '../../services/srdService';
+import { SRDDetailModal } from '../SRDDetailModal';
 
 export function OriginsSection({ formData, errors, onUpdateField }) {
   const [srdData, setSrdData] = useState({
@@ -15,6 +17,8 @@ export function OriginsSection({ formData, errors, onUpdateField }) {
     races: [],
     alignments: [],
   });
+
+  const [detailConfig, setDetailConfig] = useState(null);
 
   useEffect(() => {
     const fetchSrd = async () => {
@@ -32,16 +36,33 @@ export function OriginsSection({ formData, errors, onUpdateField }) {
     fetchSrd();
   }, []);
 
-  const classes = srdData.classes.map((c) => c.name);
-  const races = srdData.races.map((r) => r.name);
-  const alignments = srdData.alignments.map((a) => a.name);
+  const openDetails = (type, index) => {
+    if (!index || index === 'none') return;
+    setDetailConfig({ type, index });
+  };
+
+  const renderLabel = (text, type, value, required = false) => (
+    <div className="flex items-center justify-between">
+      <Label className="text-[10px] text-gray-500 uppercase font-black">
+        {text} {required && '*'}
+      </Label>
+      {value && value !== 'none' && (
+        <button
+          type="button"
+          onClick={() => openDetails(type, value)}
+          className="text-gray-500 hover:text-yellow-400 transition-colors p-1 -m-1"
+          title="Ver detalles"
+        >
+          <Info className="w-3 h-3" />
+        </button>
+      )}
+    </div>
+  );
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       <div className="space-y-1.5">
-        <Label className="text-[10px] text-gray-500 uppercase font-black">
-          Clase Principal {!formData.npc && '*'}
-        </Label>
+        {renderLabel('Clase Principal', 'class', formData.char_class, !formData.npc)}
         <Select
           value={formData.char_class || ''}
           onValueChange={(val) => onUpdateField('char_class', val)}
@@ -52,9 +73,9 @@ export function OriginsSection({ formData, errors, onUpdateField }) {
             <SelectValue placeholder="Seleccionar" />
           </SelectTrigger>
           <SelectContent className="bg-gray-900 border-gray-800 text-gray-100">
-            {classes.map((c) => (
-              <SelectItem key={c} value={c}>
-                {c}
+            {srdData.classes.map((c) => (
+              <SelectItem key={c.index} value={c.index}>
+                {c.name}
               </SelectItem>
             ))}
           </SelectContent>
@@ -63,10 +84,9 @@ export function OriginsSection({ formData, errors, onUpdateField }) {
           <p className="text-[10px] text-red-400">{errors.char_class}</p>
         )}
       </div>
+
       <div className="space-y-1.5">
-        <Label className="text-[10px] text-gray-500 uppercase font-black">
-          Clase Secundaria
-        </Label>
+        {renderLabel('Clase Secundaria', 'class', formData.secondary_class)}
         <Select
           value={formData.secondary_class || 'none'}
           onValueChange={(val) =>
@@ -78,18 +98,17 @@ export function OriginsSection({ formData, errors, onUpdateField }) {
           </SelectTrigger>
           <SelectContent className="bg-gray-900 border-gray-800 text-gray-100">
             <SelectItem value="none">Ninguna</SelectItem>
-            {classes.map((c) => (
-              <SelectItem key={c} value={c}>
-                {c}
+            {srdData.classes.map((c) => (
+              <SelectItem key={c.index} value={c.index}>
+                {c.name}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
       </div>
+
       <div className="space-y-1.5">
-        <Label className="text-[10px] text-gray-500 uppercase font-black">
-          Raza {!formData.npc && '*'}
-        </Label>
+        {renderLabel('Raza', 'race', formData.race, !formData.npc)}
         <Select
           value={formData.race || ''}
           onValueChange={(val) => onUpdateField('race', val)}
@@ -100,9 +119,9 @@ export function OriginsSection({ formData, errors, onUpdateField }) {
             <SelectValue placeholder="Seleccionar" />
           </SelectTrigger>
           <SelectContent className="bg-gray-900 border-gray-800 text-gray-100">
-            {races.map((r) => (
-              <SelectItem key={r} value={r}>
-                {r}
+            {srdData.races.map((r) => (
+              <SelectItem key={r.index} value={r.index}>
+                {r.name}
               </SelectItem>
             ))}
           </SelectContent>
@@ -111,10 +130,9 @@ export function OriginsSection({ formData, errors, onUpdateField }) {
           <p className="text-[10px] text-red-400">{errors.race}</p>
         )}
       </div>
+
       <div className="space-y-1.5">
-        <Label className="text-[10px] text-gray-500 uppercase font-black">
-          Alineamiento Moral {!formData.npc && '*'}
-        </Label>
+        {renderLabel('Alineamiento Moral', 'alignment', formData.alignment, !formData.npc)}
         <Select
           value={formData.alignment || ''}
           onValueChange={(val) => onUpdateField('alignment', val)}
@@ -125,9 +143,9 @@ export function OriginsSection({ formData, errors, onUpdateField }) {
             <SelectValue placeholder="Seleccionar" />
           </SelectTrigger>
           <SelectContent className="bg-gray-900 border-gray-800 text-gray-100">
-            {alignments.map((a) => (
-              <SelectItem key={a} value={a}>
-                {a}
+            {srdData.alignments.map((a) => (
+              <SelectItem key={a.index} value={a.index}>
+                {a.name}
               </SelectItem>
             ))}
           </SelectContent>
@@ -136,6 +154,15 @@ export function OriginsSection({ formData, errors, onUpdateField }) {
           <p className="text-[10px] text-red-400">{errors.alignment}</p>
         )}
       </div>
+
+      {detailConfig && (
+        <SRDDetailModal
+          isOpen={!!detailConfig}
+          onClose={() => setDetailConfig(null)}
+          type={detailConfig.type}
+          index={detailConfig.index}
+        />
+      )}
     </div>
   );
 }

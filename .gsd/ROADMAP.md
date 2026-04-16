@@ -66,9 +66,15 @@
 - [x] Update routes for character creation and editing.
 - [x] Remove legacy drawers from Narrator Dashboard and Characters Page.
 
-### Phase 9: SRD Data Integration (In Progress)
-**Status**: ⬜ Planning Complete
+### Phase 9: SRD Data Integration
+**Status**: ✅ Complete
 **Objective**: Connect character form dropdowns to `dnd5e-api`.
-- [ ] Create `useSRD` hook for data fetching.
-- [ ] Implement translation mapping (EN -> ES).
-- [ ] Update `CharacterForm` dropdowns to use dynamic data.
+- [x] Create `srdService` for data fetching.
+- [x] Update `CharacterForm` dropdowns to use dynamic data.
+
+### Phase 10: SRD Details & Index Selection
+**Status**: ⬜ Planning Complete
+**Objective**: Transition to index-based selection and add detail view functionality.
+- [ ] Transition dropdowns to use SRD indices.
+- [ ] Implement SRD Detail Modal.
+- [ ] Add info buttons to character form labels.
