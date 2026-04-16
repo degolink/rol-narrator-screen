@@ -65,3 +65,10 @@
 - [x] Create unified character management page.
 - [x] Update routes for character creation and editing.
 - [x] Remove legacy drawers from Narrator Dashboard and Characters Page.
+
+### Phase 9: SRD Data Integration (In Progress)
+**Status**: ⬜ Planning Complete
+**Objective**: Connect character form dropdowns to `dnd5e-api`.
+- [ ] Create `useSRD` hook for data fetching.
+- [ ] Implement translation mapping (EN -> ES).
+- [ ] Update `CharacterForm` dropdowns to use dynamic data.
