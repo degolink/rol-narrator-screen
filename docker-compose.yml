@@ -135,6 +135,8 @@ services:
     environment:
       MONGODB_URI: mongodb://mongo:27017/dnd5e
       REDIS_URL: redis://redis:6379
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
     depends_on:
       - mongo
       - redis
