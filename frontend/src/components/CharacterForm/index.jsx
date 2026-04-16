@@ -7,6 +7,8 @@ import { useUser } from '../../context/UserContext';
 import { ImageCropper } from '../ImageCropper';
 import { Button } from '@/components/ui/button';
 
+import { srdService } from '../../services/srdService';
+
 // Sub-components
 import { AvatarSection } from './AvatarSection';
 import { IdentitySection } from './IdentitySection';
@@ -31,11 +33,34 @@ export function CharacterForm({ character, close }) {
         },
   );
 
+  const [srdData, setSrdData] = useState({
+    classes: [],
+    races: [],
+    alignments: [],
+  });
+
   const [levelUpMsg, setLevelUpMsg] = useState(null);
   const [errors, setErrors] = useState({});
   const [isCropping, setIsCropping] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
   const fileInputRef = useRef(null);
+
+  // Fetch SRD dynamic data
+  useEffect(() => {
+    const fetchSrd = async () => {
+      try {
+        const [classes, races, alignments] = await Promise.all([
+          srdService.getClasses(),
+          srdService.getRaces(),
+          srdService.getAlignments(),
+        ]);
+        setSrdData({ classes, races, alignments });
+      } catch (err) {
+        console.error('Error fetching SRD data:', err);
+      }
+    };
+    fetchSrd();
+  }, []);
 
   const formDataRef = useRef(formData);
   const characterRef = useRef(character);
@@ -299,6 +324,7 @@ export function CharacterForm({ character, close }) {
           formData={formData}
           errors={errors}
           onUpdateField={updateField}
+          srdData={srdData}
         />
 
         <ProgressionSection

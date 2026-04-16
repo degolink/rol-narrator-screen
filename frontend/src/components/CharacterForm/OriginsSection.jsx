@@ -9,7 +9,18 @@ import {
 } from '@/components/ui/select';
 import { CLASES, RAZAS, ALINEAMIENTOS } from './CharacterForm.constants';
 
-export function OriginsSection({ formData, errors, onUpdateField }) {
+export function OriginsSection({ formData, errors, onUpdateField, srdData }) {
+  const classes =
+    srdData?.classes?.length > 0
+      ? srdData.classes.map((c) => c.name)
+      : CLASES;
+  const races =
+    srdData?.races?.length > 0 ? srdData.races.map((r) => r.name) : RAZAS;
+  const alignments =
+    srdData?.alignments?.length > 0
+      ? srdData.alignments.map((a) => a.name)
+      : ALINEAMIENTOS;
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       <div className="space-y-1.5">
@@ -26,7 +37,7 @@ export function OriginsSection({ formData, errors, onUpdateField }) {
             <SelectValue placeholder="Seleccionar" />
           </SelectTrigger>
           <SelectContent className="bg-gray-900 border-gray-800 text-gray-100">
-            {CLASES.map((c) => (
+            {classes.map((c) => (
               <SelectItem key={c} value={c}>
                 {c}
               </SelectItem>
@@ -52,7 +63,7 @@ export function OriginsSection({ formData, errors, onUpdateField }) {
           </SelectTrigger>
           <SelectContent className="bg-gray-900 border-gray-800 text-gray-100">
             <SelectItem value="none">Ninguna</SelectItem>
-            {CLASES.map((c) => (
+            {classes.map((c) => (
               <SelectItem key={c} value={c}>
                 {c}
               </SelectItem>
@@ -74,7 +85,7 @@ export function OriginsSection({ formData, errors, onUpdateField }) {
             <SelectValue placeholder="Seleccionar" />
           </SelectTrigger>
           <SelectContent className="bg-gray-900 border-gray-800 text-gray-100">
-            {RAZAS.map((r) => (
+            {races.map((r) => (
               <SelectItem key={r} value={r}>
                 {r}
               </SelectItem>
@@ -99,7 +110,7 @@ export function OriginsSection({ formData, errors, onUpdateField }) {
             <SelectValue placeholder="Seleccionar" />
           </SelectTrigger>
           <SelectContent className="bg-gray-900 border-gray-800 text-gray-100">
-            {ALINEAMIENTOS.map((a) => (
+            {alignments.map((a) => (
               <SelectItem key={a} value={a}>
                 {a}
               </SelectItem>
