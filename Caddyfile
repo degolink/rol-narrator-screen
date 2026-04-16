@@ -43,7 +43,9 @@
 
     # Proxy for the D&D 5e API (SRD)
     handle_path /dnd5e-api/* {
-        reverse_proxy dnd5e-api:3000
+        reverse_proxy dnd5e-api:3000 {
+            header_down Location /api/ /dnd5e-api/api/
+        }
     }
 
     # Proxy for the Frontend (Vite with HMR support)
