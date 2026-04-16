@@ -134,8 +134,10 @@ services:
     container_name: rol_dnd5e_api
     environment:
       MONGODB_URI: mongodb://mongo:27017/dnd5e
+      REDIS_URL: redis://redis:6379
     depends_on:
       - mongo
+      - redis
 
 volumes:
   postgres_data:
