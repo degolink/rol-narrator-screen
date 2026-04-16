@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Label } from '@/components/ui/label';
 import {
   Select,
@@ -7,19 +7,34 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { CLASES, RAZAS, ALINEAMIENTOS } from './CharacterForm.constants';
+import { srdService } from '../../services/srdService';
 
-export function OriginsSection({ formData, errors, onUpdateField, srdData }) {
-  const classes =
-    srdData?.classes?.length > 0
-      ? srdData.classes.map((c) => c.name)
-      : CLASES;
-  const races =
-    srdData?.races?.length > 0 ? srdData.races.map((r) => r.name) : RAZAS;
-  const alignments =
-    srdData?.alignments?.length > 0
-      ? srdData.alignments.map((a) => a.name)
-      : ALINEAMIENTOS;
+export function OriginsSection({ formData, errors, onUpdateField }) {
+  const [srdData, setSrdData] = useState({
+    classes: [],
+    races: [],
+    alignments: [],
+  });
+
+  useEffect(() => {
+    const fetchSrd = async () => {
+      try {
+        const [classes, races, alignments] = await Promise.all([
+          srdService.getClasses(),
+          srdService.getRaces(),
+          srdService.getAlignments(),
+        ]);
+        setSrdData({ classes, races, alignments });
+      } catch (err) {
+        console.error('Error fetching SRD data:', err);
+      }
+    };
+    fetchSrd();
+  }, []);
+
+  const classes = srdData.classes.map((c) => c.name);
+  const races = srdData.races.map((r) => r.name);
+  const alignments = srdData.alignments.map((a) => a.name);
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
