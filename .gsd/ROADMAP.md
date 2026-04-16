@@ -79,9 +79,9 @@
 - [x] Implement SRD Detail Modal.
 - [x] Add info buttons to character form labels.
 
-### Phase 11: Premium SRD Detail UI (In Progress)
-**Status**: ⬜ Planning Complete
+### Phase 11: Premium SRD Detail UI
+**Status**: ✅ Complete
 **Objective**: Create a specialized, high-fidelity UI for SRD entity details.
-- [ ] Implement specialized renderers for Classes, Races, and Alignments.
-- [ ] Add "Quick Stats" and "Lore" sections.
-- [ ] Optimize typography and visual hierarchy.
+- [x] Implement specialized renderers for Classes, Races, and Alignments.
+- [x] Add "Quick Stats" and "Lore" sections.
+- [x] Optimize typography and visual hierarchy.
