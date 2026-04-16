@@ -116,7 +116,7 @@ Before using the SRD data, you must initialize the MongoDB database. We provide 
 ./setup.sh
 ```
 
-This script will start the necessary containers and seed the database with the official SRD data.
+This script will start the necessary containers. The database is pre-seeded with the official SRD data, so no manual loading is required.
 
 ---
 

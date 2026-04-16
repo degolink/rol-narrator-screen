@@ -124,7 +124,7 @@ services:
       - "1025:1025"
 
   mongo:
-    image: mongo:latest
+    image: ghcr.io/5e-bits/5e-database:latest
     container_name: rol_mongo
     volumes:
       - mongo_data:/data/db
@@ -132,7 +132,7 @@ services:
       - "27017:27017"
 
   dnd5e-api:
-    image: dnd5eapi/dnd5eapi:latest
+    image: ghcr.io/5e-bits/5e-srd-api:latest
     container_name: rol_dnd5e_api
     environment:
       MONGODB_URI: mongodb://mongo:27017/dnd5e

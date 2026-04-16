@@ -26,11 +26,8 @@ until $(curl -sSf http://localhost:3000/api > /dev/null 2>&1); do
     ((RETRY_COUNT++))
 done
 
-echo -e "\n✅ dnd5e-api is up! Initializing SRD database..."
+echo -e "\n✅ dnd5e-api is up! The database is pre-seeded with SRD data."
 
-# Run the seeding script
-docker compose exec dnd5e-api npm run db:refresh
-
-echo "🎉 SRD Database initialized successfully!"
+echo "🎉 SRD Integration ready!"
 echo "💡 You can now run ./start.sh to start the full project."
 echo "🔗 D&D 5e API will be available at: https://${FRONTEND_DOMAIN}/dnd5e-api/api"
