@@ -1,6 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { NarratorDashboardPage } from './pages/NarratorDashboardPage/NarratorDashboardPage';
-import { CharacterDetailsPage } from './pages/CharacterDetailsPage';
+import { CharacterPage } from './pages/CharacterPage';
 import { CharactersPage } from './pages/CharactersPage/CharactersPage';
 import { LoginPage } from './pages/LoginPage';
 import { VerifyPage } from './pages/VerifyPage';
@@ -80,7 +80,7 @@ function AppContent() {
               path="/personaje/:id"
               element={
                 <ProtectedRoute>
-                  <CharacterDetailsPage />
+                  <CharacterPage />
                 </ProtectedRoute>
               }
             />

@@ -330,11 +330,7 @@ export function CharacterForm({ character, close }) {
 
         {!isEdit && (
           <div className="sticky bottom-0 left-0 right-0 p-4 -mx-6 bg-[#0c0c0e]/95 backdrop-blur-md border-t border-white/5 z-10 flex gap-4">
-            <Button
-              type="submit"
-              size="lg"
-              className="flex-1 bg-purple-600 hover:bg-purple-500 text-white font-black uppercase tracking-widest h-11"
-            >
+            <Button type="submit" size="lg" className="flex-1">
               Crear Personaje
             </Button>
           </div>

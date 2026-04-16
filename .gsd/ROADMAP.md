@@ -60,8 +60,8 @@
 - Update README with the new service details.
 
 ### Phase 8: Unified Character Management
-**Status**: ⬜ Not Started
+**Status**: ✅ Complete
 **Objective**: Replace character creation/editing drawers with a dedicated unified page.
-- Create unified character management page.
-- Update routes for character creation and editing.
-- Remove legacy drawers from Narrator Dashboard and Characters Page.
+- [x] Create unified character management page.
+- [x] Update routes for character creation and editing.
+- [x] Remove legacy drawers from Narrator Dashboard and Characters Page.

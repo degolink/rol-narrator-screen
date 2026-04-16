@@ -12,6 +12,7 @@ export function useCharacter(characterId) {
   const [loading, setLoading] = useState(true);
 
   const socketUrl = useMemo(() => {
+    if (!characterId || characterId === 'nuevo') return null;
     return `${WS_BASE_URL}/characters/${characterId}/`;
   }, [characterId]);
 
@@ -24,6 +25,12 @@ export function useCharacter(characterId) {
   useEffect(() => {
     if (!characterId) {
       navigate('/', { replace: true });
+      return;
+    }
+
+    if (characterId === 'nuevo') {
+      setLoading(false);
+      return;
     }
 
     const fetchCharacter = async () => {

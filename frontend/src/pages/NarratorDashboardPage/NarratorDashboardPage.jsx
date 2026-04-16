@@ -1,45 +1,27 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import { dequal } from 'dequal';
+import React, { useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { CharactersDrawer } from './CharactersDrawer';
 import { Header } from '../../components/Header';
 import { useCharacters } from '../../hooks/characters/useCharacters';
 import { NarratorCharacterCard } from './NarratorCharacterCard/NarratorCharacterCard';
 import { DeleteCharacterDialog } from './NarratorCharacterCard/DeleteCharacterDialog';
 
 export function NarratorDashboardPage() {
-  // drawerMode: null | 'create' | 'edit'
-  const [drawerMode, setDrawerMode] = useState(null);
-  const [editingCharacter, setEditingCharacter] = useState(null);
+  const navigate = useNavigate();
   const [characterToDelete, setCharacterToDelete] = useState();
   const { loading, characters } = useCharacters();
-  const drawerOpen = drawerMode !== null;
 
   const openCreate = useCallback(() => {
-    setEditingCharacter(null);
-    setDrawerMode('create');
-  }, []);
+    navigate('/personaje/nuevo');
+  }, [navigate]);
 
-  const openEdit = useCallback((character) => {
-    setEditingCharacter(character);
-    setDrawerMode('edit');
-  }, []);
-
-  const closeDrawer = useCallback(() => {
-    setDrawerMode(null);
-    setEditingCharacter(null);
-  }, []);
-
-  // Keep editingCharacter in sync with the characters list (for real-time updates)
-  useEffect(() => {
-    if (!editingCharacter) return;
-
-    const updated = characters.find((c) => c.id === editingCharacter.id);
-    if (updated && !dequal(updated, editingCharacter)) {
-      setEditingCharacter(updated);
-    }
-  }, [characters, editingCharacter]);
+  const openEdit = useCallback(
+    (character) => {
+      navigate(`/personaje/${character.id}`);
+    },
+    [navigate],
+  );
 
   if (loading)
     return (
@@ -62,10 +44,7 @@ export function NarratorDashboardPage() {
 
       {/* Main Actions */}
       <div className="flex justify-center mb-10">
-        <Button
-          onClick={openCreate}
-          className="bg-purple-900 hover:bg-purple-700 text-white"
-        >
+        <Button onClick={openCreate}>
           <Plus className="mr-2 h-5 w-5" /> Nuevo Personaje
         </Button>
       </div>
@@ -135,14 +114,6 @@ export function NarratorDashboardPage() {
           </div>
         )}
       </div>
-
-      {/* Shared drawer — create or edit */}
-      <CharactersDrawer
-        isOpen={drawerOpen}
-        onClose={closeDrawer}
-        mode={drawerMode}
-        character={editingCharacter}
-      />
 
       {!!characterToDelete && (
         <DeleteCharacterDialog
