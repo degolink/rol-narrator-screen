@@ -9,10 +9,12 @@ import {
   BookOpen,
   Dna,
 } from 'lucide-react';
-import { srdService } from '../../../../services/srdService';
+import { useSRDModal } from '@/context/SRDModalContext';
+import { srdService } from '@/services/srdService';
 import { DataItem, TagList, SRDLoader } from '../SRDCommon';
 
 export default function SRDRaceView({ index }) {
+  const { setTitle } = useSRDModal();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -22,6 +24,7 @@ export default function SRDRaceView({ index }) {
       try {
         const result = await srdService.getRace(index);
         setData(result);
+        setTitle(result.name);
       } catch {
         toast.error('Error al cargar los detalles de la raza');
       } finally {
@@ -29,7 +32,7 @@ export default function SRDRaceView({ index }) {
       }
     }
     fetchData();
-  }, [index]);
+  }, [index, setTitle]);
 
   if (loading) {
     return <SRDLoader />;

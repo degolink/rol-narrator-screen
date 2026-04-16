@@ -3,6 +3,17 @@ import { Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { SRDLink } from './SRDLink';
 
+/**
+ * @typedef {Object} DataItemProps
+ * @property {string} label - The label for the data item.
+ * @property {React.ReactNode} value - The content to display.
+ * @property {import('lucide-react').LucideIcon} [icon] - Optional icon component.
+ */
+
+/**
+ * Renders a labeled data row for SRD details.
+ * @param {DataItemProps} props
+ */
 export function DataItem({ label, value, icon: Icon }) {
   if (!value || (Array.isArray(value) && value.length === 0)) return null;
 
@@ -21,6 +32,17 @@ export function DataItem({ label, value, icon: Icon }) {
   );
 }
 
+/**
+ * @typedef {Object} TagListProps
+ * @property {Array<string|Object>} items - List of items to render.
+ * @property {string} [variant] - Badge variant.
+ * @property {string} [type] - Entity type for linking.
+ */
+
+/**
+ * Renders a list of badges, potentially as SRDLinks.
+ * @param {TagListProps} props
+ */
 export function TagList({ items, variant = 'secondary', type }) {
   if (!items || items.length === 0) return null;
   return (
@@ -28,10 +50,19 @@ export function TagList({ items, variant = 'secondary', type }) {
       {items.map((item, i) => {
         const name =
           typeof item === 'string' ? item : item.name || item.item?.name;
-        const index = item.index || item.item?.index;
-        const url = item.url || item.item?.url;
+        // @ts-ignore - Index might exist on object
+        const index = item?.index || item?.item?.index;
+        // @ts-ignore - URL might exist on object
+        const url = item?.url || item?.item?.url;
 
-        if (index && (url || type)) {
+        const isLinkable =
+          index &&
+          (url || type) &&
+          !url?.includes('proficiencies') &&
+          !url?.includes('languages') &&
+          type !== 'proficiency';
+
+        if (isLinkable) {
           return (
             <SRDLink key={i} name={name} index={index} type={type} url={url} />
           );
@@ -51,6 +82,9 @@ export function TagList({ items, variant = 'secondary', type }) {
   );
 }
 
+/**
+ * Loading spinner component for SRD views.
+ */
 export function SRDLoader() {
   return (
     <div className="flex flex-col items-center justify-center py-20 gap-4">

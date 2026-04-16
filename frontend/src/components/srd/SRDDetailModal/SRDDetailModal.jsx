@@ -6,7 +6,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useSRDModal } from '../../../context/SRDModalContext';
+import { useSRDModal } from '@/context/SRDModalContext';
 
 // Views
 import SRDClassView from './views/SRDClassView';
@@ -20,10 +20,22 @@ const VIEW_COMPONENTS = {
   alignment: SRDAlignmentView,
 };
 
+const TYPE_LABELS = {
+  class: 'Clase',
+  race: 'Raza',
+  alignment: 'Alineamiento',
+  trait: 'Rasgo',
+  feature: 'Característica',
+  spell: 'Hechizo',
+  subrace: 'Subraza',
+  subclass: 'Subclase',
+};
+
 export function SRDDetailModal() {
-  const { isOpen, type, index, closeModal } = useSRDModal();
+  const { isOpen, type, index, title, closeModal } = useSRDModal();
 
   const ViewComponent = VIEW_COMPONENTS[type] || SRDGenericView;
+  const typeLabel = TYPE_LABELS[type] || type;
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && closeModal()}>
@@ -32,10 +44,10 @@ export function SRDDetailModal() {
           <div className="absolute top-0 left-0 w-full h-24 bg-gradient-to-b from-yellow-500/5 to-transparent pointer-events-none" />
           <div className="space-y-1 relative z-10">
             <span className="text-[10px] uppercase font-black tracking-[0.4em] text-yellow-500/40 block mb-1">
-              Ref. {type}
+              Ref. {typeLabel}
             </span>
             <DialogTitle className="text-3xl font-black text-white uppercase tracking-tighter leading-none mb-2">
-              Detalles del Códice
+              {title || 'Detalles del Códice'}
             </DialogTitle>
           </div>
         </DialogHeader>

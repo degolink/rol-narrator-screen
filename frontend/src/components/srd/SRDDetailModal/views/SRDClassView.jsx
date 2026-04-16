@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { srdService } from '../../../../services/srdService';
-import { DataItem, TagList, SRDLoader } from '../SRDCommon';
-import { Heart, Shield, Swords, Zap, GitBranch, Dna } from 'lucide-react';
 import { toast } from 'sonner';
+import { Heart, Shield, Swords, Zap, GitBranch, Dna } from 'lucide-react';
+import { srdService } from '@/services/srdService';
+import { DataItem, TagList, SRDLoader } from '../SRDCommon';
+import { useSRDModal } from '@/context/SRDModalContext';
 
 export default function SRDClassView({ index }) {
+  const { setTitle } = useSRDModal();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -14,14 +16,15 @@ export default function SRDClassView({ index }) {
       try {
         const result = await srdService.getClass(index);
         setData(result);
-      } catch (err) {
+        setTitle(result.name);
+      } catch {
         toast.error('Error al cargar los detalles de la clase');
       } finally {
         setLoading(false);
       }
     }
     fetchData();
-  }, [index]);
+  }, [index, setTitle]);
 
   if (loading) {
     return <SRDLoader />;

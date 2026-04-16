@@ -1,12 +1,27 @@
 import React, { useCallback } from 'react';
-import { useSRDModal } from '../../../context/SRDModalContext';
+import { useSRDModal } from '@/context/SRDModalContext';
 import { Badge } from '@/components/ui/badge';
 
+/**
+ * @typedef {Object} SRDLinkProps
+ * @property {string} name - Display name for the link.
+ * @property {string} index - SRD index for the entity.
+ * @property {string} [type] - Entity type (e.g. 'class', 'race').
+ * @property {string} [url] - Direct SRD URL to extract type from.
+ * @property {string} [className] - Optional CSS classes.
+ */
+
+/**
+ * Clickable badge that navigates the global SRD modal.
+ * @param {SRDLinkProps} props
+ */
 export function SRDLink({ name, index, type, url, className }) {
   const { changeView } = useSRDModal();
 
-  // Helper to parse type from URL if not provided
-  // e.g. /api/traits/darkvision -> traits
+  /**
+   * Helper to parse type from URL if not provided.
+   * e.g. /api/traits/darkvision -> traits
+   */
   const getParsedType = useCallback(() => {
     if (type) return type;
     if (!url) return null;
@@ -25,7 +40,7 @@ export function SRDLink({ name, index, type, url, className }) {
         changeView(normalizedType, index);
       }
     },
-    [getParsedType, index, changeView]
+    [getParsedType, index, changeView],
   );
 
   return (

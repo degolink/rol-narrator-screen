@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { BookOpen } from 'lucide-react';
 import { toast } from 'sonner';
-import { srdService } from '../../../../services/srdService';
+import { useSRDModal } from '@/context/SRDModalContext';
+import { srdService } from '@/services/srdService';
 import { DataItem, SRDLoader } from '../SRDCommon';
 
 export default function SRDGenericView({ type, index }) {
+  const { setTitle } = useSRDModal();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -14,6 +16,7 @@ export default function SRDGenericView({ type, index }) {
       try {
         const result = await srdService.getItem(type, index);
         setData(result);
+        setTitle(result.name);
       } catch {
         toast.error(`Error al cargar los detalles de ${type}`);
       } finally {
@@ -21,7 +24,7 @@ export default function SRDGenericView({ type, index }) {
       }
     }
     fetchData();
-  }, [type, index]);
+  }, [type, index, setTitle]);
 
   if (loading) {
     return <SRDLoader />;

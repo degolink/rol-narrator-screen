@@ -1,5 +1,26 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
 
+/**
+ * @typedef {Object} SRDModalConfig
+ * @property {boolean} isOpen
+ * @property {string|null} type
+ * @property {string|null} index
+ * @property {string} title
+ */
+
+/**
+ * @typedef {Object} SRDModalContextValue
+ * @property {boolean} isOpen
+ * @property {string|null} type
+ * @property {string|null} index
+ * @property {string} title
+ * @property {function(string, string): void} openModal
+ * @property {function(): void} closeModal
+ * @property {function(string, string): void} changeView
+ * @property {function(string): void} setTitle
+ */
+
+/** @type {React.Context<SRDModalContextValue | undefined>} */
 const SRDModalContext = createContext(undefined);
 
 export function SRDModalProvider({ children }) {
@@ -7,6 +28,7 @@ export function SRDModalProvider({ children }) {
     isOpen: false,
     type: null,
     index: null,
+    title: '',
   });
 
   const openModal = useCallback((type, index) => {
@@ -14,6 +36,7 @@ export function SRDModalProvider({ children }) {
       isOpen: true,
       type,
       index,
+      title: 'Cargando...',
     });
   }, []);
 
@@ -26,7 +49,12 @@ export function SRDModalProvider({ children }) {
       isOpen: true,
       type,
       index,
+      title: 'Cargando...',
     });
+  }, []);
+
+  const setTitle = useCallback((title) => {
+    setConfig((prev) => ({ ...prev, title }));
   }, []);
 
   return (
@@ -36,6 +64,7 @@ export function SRDModalProvider({ children }) {
         openModal,
         closeModal,
         changeView,
+        setTitle,
       }}
     >
       {children}

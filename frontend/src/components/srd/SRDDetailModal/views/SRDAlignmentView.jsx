@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Scale } from 'lucide-react';
 import { toast } from 'sonner';
-import { srdService } from '../../../../services/srdService';
+import { useSRDModal } from '@/context/SRDModalContext';
+import { srdService } from '@/services/srdService';
 import { SRDLoader } from '../SRDCommon';
 
 export default function SRDAlignmentView({ index }) {
+  const { setTitle } = useSRDModal();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -14,6 +16,7 @@ export default function SRDAlignmentView({ index }) {
       try {
         const result = await srdService.getAlignment(index);
         setData(result);
+        setTitle(result.name);
       } catch {
         toast.error('Error al cargar los detalles del alineamiento');
       } finally {
@@ -21,7 +24,7 @@ export default function SRDAlignmentView({ index }) {
       }
     }
     fetchData();
-  }, [index]);
+  }, [index, setTitle]);
 
   if (loading) {
     return <SRDLoader />;
