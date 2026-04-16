@@ -1,12 +1,12 @@
 # Project State
 
 ## Last Session Summary
-Completed Phase 5: Language consistency refactoring. All models, logic, and endpoints are now in English (internally). Frontend updated to match while keeping Spanish UI labels.
+Refactored CharacterForm to use SRD indices and added an initial SRD detail modal.
 
 ## Current Position
-- **Phase**: 10
+- **Phase**: 11
 - **Task**: Planning complete
 - **Status**: Ready for execution
 
 ## Next Steps
-1. /execute 10
+1. /execute 11

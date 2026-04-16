@@ -73,8 +73,15 @@
 - [x] Update `CharacterForm` dropdowns to use dynamic data.
 
 ### Phase 10: SRD Details & Index Selection
-**Status**: ⬜ Planning Complete
+**Status**: ✅ Complete
 **Objective**: Transition to index-based selection and add detail view functionality.
-- [ ] Transition dropdowns to use SRD indices.
-- [ ] Implement SRD Detail Modal.
-- [ ] Add info buttons to character form labels.
+- [x] Transition dropdowns to use SRD indices.
+- [x] Implement SRD Detail Modal.
+- [x] Add info buttons to character form labels.
+
+### Phase 11: Premium SRD Detail UI (In Progress)
+**Status**: ⬜ Planning Complete
+**Objective**: Create a specialized, high-fidelity UI for SRD entity details.
+- [ ] Implement specialized renderers for Classes, Races, and Alignments.
+- [ ] Add "Quick Stats" and "Lore" sections.
+- [ ] Optimize typography and visual hierarchy.
