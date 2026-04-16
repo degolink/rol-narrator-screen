@@ -128,8 +128,6 @@ services:
     container_name: rol_mongo
     volumes:
       - mongo_data:/data/db
-    ports:
-      - "27017:27017"
 
   dnd5e-api:
     image: ghcr.io/5e-bits/5e-srd-api:latest
@@ -138,8 +136,6 @@ services:
       MONGODB_URI: mongodb://mongo:27017/dnd5e
     depends_on:
       - mongo
-    ports:
-      - "3000:3000"
 
 volumes:
   postgres_data:
